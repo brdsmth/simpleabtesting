@@ -80,19 +80,6 @@ npm run dev:frontend # Frontend on :3000
 npm run dev:demo     # Demo page on :3001
 ```
 
-### Project Structure
-```
-simple-ab-testing/
-├── packages/
-│   ├── frontend/     # React dashboard
-│   ├── backend/      # Node.js API
-│   ├── sdk/          # TypeScript SDK
-│   └── shared/       # Shared types/utils
-├── docs/             # Documentation
-├── scripts/          # Build/deployment scripts
-└── docker/           # Docker configurations
-```
-
 ## 📖 Documentation
 
 - [Getting Started Guide](./docs/GETTING_STARTED.md)
@@ -130,46 +117,14 @@ See our [Project Plan](./PROJECT_PLAN.md) for detailed roadmap.
 - [ ] Docker containerization
 - [ ] Comprehensive documentation
 
-## 💰 Pricing
-
-### Open Source (Free)
-- Full feature set
-- Self-hosting
-- Community support
-- MIT License
-
-### Managed Cloud Service
-- **Starter**: Free (up to 1,000 visitors/month)
-- **Professional**: $29/month (unlimited)
-- **Enterprise**: Custom pricing
-
-## 🌟 Why Choose Simple A/B Testing?
-
-| Feature | Simple A/B Testing | Google Optimize | Optimizely | VWO |
-|---------|-------------------|-----------------|------------|-----|
-| **Open Source** | ✅ | ❌ | ❌ | ❌ |
-| **Self-Hosted** | ✅ | ❌ | ❌ | ❌ |
-| **Visual Editor** | ✅ | ✅ | ✅ | ✅ |
-| **Lightweight SDK** | ✅ (< 50KB) | ❌ | ❌ | ❌ |
-| **Non-Technical Friendly** | ✅ | ✅ | ❌ | ✅ |
-| **Cost** | Free/Low | Discontinued | High | High |
-
-## 📞 Support
-
-- **Documentation**: Check our [docs](./docs/)
-- **Issues**: [GitHub Issues](https://github.com/yourusername/simple-ab-testing/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/simple-ab-testing/discussions)
-- **Email**: support@simple-ab-testing.com *(coming soon)*
-
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
-
-- Inspired by Google Optimize (RIP)
-- Built for the product management community
-- Open source contributors and supporters
+- **Documentation**: Check our [docs](./docs/)
+- **Issues**: [GitHub Issues](https://github.com/yourusername/simple-ab-testing/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/yourusername/simple-ab-testing/discussions)
+- **Email**: support@simpleabtesting.com *(coming soon)*
 
 ---
 
