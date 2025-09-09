@@ -19,7 +19,7 @@ const Header = () => {
             </a>
           </nav>
           <div className="header-actions">
-            <a href="#" className="btn btn-secondary">Sign In</a>
+            {/* <a href="#" className="btn btn-secondary">Sign In</a> */}
             <a href="#" className="btn btn-primary">Get Started</a>
           </div>
         </div>

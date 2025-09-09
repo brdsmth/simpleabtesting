@@ -11,8 +11,7 @@ const Hero = () => {
               <span className="highlight"> That Actually Works</span>
             </h1>
             <p className="hero-subtitle">
-              Replace Google Optimize with a drop-in solution that's easier to use than Optimizely 
-              and more affordable than ABTasty. Start testing in minutes, not hours.
+              Replace Google Optimize with a drop-in solution that's easy to use and affordable. Start testing in minutes, not hours.
             </p>
             <div className="hero-actions">
               <a href="#" className="btn btn-primary btn-large">

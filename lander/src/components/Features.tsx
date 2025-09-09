@@ -59,7 +59,7 @@ const Features = () => {
           <div className="comparison-table">
             <div className="comparison-header">
               <div className="comparison-cell"></div>
-              <div className="comparison-cell brand">SimpleAB</div>
+              <div className="comparison-cell brand">Simple A/B Testing</div>
               <div className="comparison-cell">Optimizely</div>
               <div className="comparison-cell">ABTasty</div>
             </div>
