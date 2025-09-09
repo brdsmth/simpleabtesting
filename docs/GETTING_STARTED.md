@@ -1,114 +1,115 @@
-# Getting Started with Simple A/B Testing
+# Getting Started
 
 ## Prerequisites
-- Node.js 18+ and npm 9+
-- A modern web browser
+- Node.js 18+
+- Modern web browser
 
 ## Quick Start
 
 ### 1. Install Dependencies
 ```bash
-# Install dependencies for all packages
 npm run install-all
 ```
 
-### 2. Start All Development Servers
-You'll need **3 terminal windows/tabs**:
+### 2. Start Development Servers
 
-**Terminal 1 - SDK Development Server (Port 3002):**
+**3 terminals needed:**
+
 ```bash
+# Terminal 1: SDK server (port 3002)
 npm run dev:sdk
-```
-This compiles the TypeScript SDK and serves it at `http://localhost:3002/simple-ab-testing.umd.js`
 
-**Terminal 2 - Frontend Dashboard (Port 3000):**
-```bash
+# Terminal 2: Dashboard (port 3000)  
 npm run dev:frontend
-```
-This starts the React dashboard where you create experiments at `http://localhost:3000`
 
-**Terminal 3 - Demo Page (Port 3001):**
-```bash
+# Terminal 3: Demo page (port 3001)
 npm run dev:demo
 ```
-This starts the demo website where you can test your experiments at `http://localhost:3001`
 
 ### 3. Create Your First Experiment
 
-1. **Open the Dashboard**: Go to http://localhost:3000
-2. **Create an Experiment**:
-   - Click "New Experiment"
-   - Name it (e.g., "Button Color Test")
-   - Set traffic allocation (100% for testing)
-   - Add variations with DOM changes
-3. **Save the Experiment**
-4. **Test It**: Click "Open Demo" or go to http://localhost:3001
+1. **Dashboard**: Go to http://localhost:3000
+2. **Create experiment** with variations and DOM changes
+3. **Copy generated SDK code**
+4. **Test it**: Go to http://localhost:3001 to see it working
 
-### 4. Example Experiment Setup
+## Example Usage
 
-Try creating this simple experiment:
+### Simple Button Color Test
 
-**Experiment Name:** "Homepage Button Test"
-**Traffic Allocation:** 100%
+```html
+<!-- Add to your website -->
+<script src="http://localhost:3002/simple-ab-testing.umd.js"></script>
+<script>
+SimpleABTesting.init({
+  debug: true,
+  experiments: [{
+    id: 'button-test',
+    name: 'Button Color Test',
+    status: 'active',
+    trafficAllocation: 100,
+    variations: [
+      { 
+        id: 'control', 
+        name: 'Control', 
+        weight: 50, 
+        changes: [] 
+      },
+      { 
+        id: 'red-button', 
+        name: 'Red Button', 
+        weight: 50, 
+        changes: [{ 
+          selector: '.btn-primary', 
+          type: 'style', 
+          value: 'background: red; color: white' 
+        }]
+      }
+    ]
+  }]
+});
+</script>
+```
 
-**Variation A (Control):**
-- Name: "Original"
-- Weight: 50%
-- Changes: (none)
+### Track Conversions
 
-**Variation B:**
-- Name: "Red Button"
-- Weight: 50%
-- Changes:
-  - Selector: `.btn-primary`
-  - Type: `style`
-  - Value: `background: #ef4444; border-color: #dc2626`
+```javascript
+// Track when user completes desired action
+SimpleABTesting.track('button-test', 'conversion');
+```
 
 ## How It Works
 
-1. **SDK** (Port 3002): Compiles TypeScript into a browser-ready JavaScript library
-2. **Frontend** (Port 3000): React app for creating and managing experiments
-3. **Demo** (Port 3001): Sample website that loads the SDK and runs experiments
+1. **SDK loads** and reads experiment config
+2. **Visitor assigned** to variation based on consistent hash
+3. **DOM changes applied** according to assigned variation
+4. **Events tracked** in localStorage
+5. **Debug info** available in browser console
 
 ## Troubleshooting
 
-**SDK not loading on demo page?**
-- Make sure the SDK server is running on port 3002
-- Check browser console for errors
-- Verify the SDK URL in the demo page matches `http://localhost:3002`
+**SDK not loading?**
+- Check that SDK server is running on port 3002
+- Look for errors in browser console
 
-**Experiments not applying?**
-- Check the CSS selectors in your experiment match elements on the demo page
-- Open browser dev tools and look for console messages from `[SimpleAB]`
-- Try refreshing the demo page to get a different variation
+**No variations showing?**  
+- Verify CSS selectors match your page elements
+- Check that experiment status is 'active'
+- Ensure variation weights sum to 100
 
-**Ports already in use?**
-- SDK: Change port in `sdk/vite.config.ts`
-- Frontend: Change port in `frontend/vite.config.ts`
-- Demo: Change port in `demo/vite.config.ts`
+**Always same variation?**
+- This is correct! Same visitor gets same variation
+- Clear localStorage to simulate new visitor
+- Use `SimpleABTesting.reset()` to reassign
 
-## Available URLs
+## File Structure
 
-- **Frontend Dashboard**: http://localhost:3000
-- **Demo Page**: http://localhost:3001  
-- **SDK File**: http://localhost:3002/simple-ab-testing.umd.js
-
-## Next Steps
-
-Once everything is running:
-1. Create experiments in the dashboard
-2. Test them on the demo page
-3. Copy the SDK integration code to use on your own websites
-4. Check the browser's localStorage to see visitor assignments and tracking data
-
-## Building for Production
-
-```bash
-# Build all packages
-npm run build:all
-
-# Or build individually
-npm run build:sdk      # Creates dist/simple-ab-testing.umd.js
-npm run build:frontend # Creates frontend/dist/
-npm run build:demo     # Creates demo/dist/
 ```
+simple-ab-testing/
+├── sdk/           # TypeScript SDK source
+├── frontend/      # React dashboard  
+├── demo/          # Demo page
+└── README.md      # Main documentation
+```
+
+That's it! Simple A/B testing with minimal setup.

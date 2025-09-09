@@ -41,27 +41,16 @@ export function assignVariation(experimentId: string, visitorId: string, variati
   const totalWeight = variations.reduce((sum, v) => sum + v.weight, 0);
   const bucket = hash % totalWeight;
   
-  debugLog(`🎲 Assignment calculation:`, {
-    visitorId,
-    experimentId,
-    hash,
-    totalWeight,
-    bucket,
-    variations: variations.map(v => ({ id: v.id, weight: v.weight }))
-  });
+  debugLog(`Assignment: bucket(${bucket}) from hash(${hash}) % ${totalWeight}`);
   
   let currentWeight = 0;
   for (const variation of variations) {
     currentWeight += variation.weight;
-    debugLog(`  Checking ${variation.id}: bucket(${bucket}) < currentWeight(${currentWeight})?`);
     if (bucket < currentWeight) {
-      debugLog(`  ✅ Selected: ${variation.id}`);
+      debugLog(`Selected: ${variation.id}`);
       return variation.id;
     }
   }
-  
-  // Fallback to first variation
-  debugLog(`  ⚠️ Fallback to first variation: ${variations[0]?.id}`);
   return variations[0]?.id || '';
 }
 

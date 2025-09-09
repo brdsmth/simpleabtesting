@@ -6,7 +6,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-20232A?style=flat&logo=react&logoColor=61DAFB)](https://reactjs.org/)
 
-Simple A/B Testing is an open-source alternative to Google Optimize, designed specifically for non-technical and slightly technical product managers who want to run frontend experiments without complexity.
+Simple A/B Testing is an open-source alternative to Google Optimize, designed specifically for product managers who want to run frontend experiments without complexity.
 
 ## ✨ Features
 
@@ -60,10 +60,6 @@ npm run dev:demo
 ```
 Frontend Dashboard (React + TypeScript)
            ↕
-Backend API (Node.js + TypeScript)
-           ↕
-PostgreSQL Database
-           ↕
 Client SDK (TypeScript) → Your Website
 ```
 
@@ -71,24 +67,17 @@ Client SDK (TypeScript) → Your Website
 
 ### Prerequisites
 - Node.js 18+
-- PostgreSQL 14+
-- npm or yarn
+- Modern web browser
 
 ### Local Setup
 ```bash
 # Install dependencies
-npm install
-
-# Set up environment
-cp .env.example .env
-# Edit .env with your database credentials
-
-# Run database migrations
-npm run db:migrate
+npm run install-all
 
 # Start development servers
-npm run dev:backend  # Backend API on :3001
+npm run dev:sdk      # SDK server on :3002
 npm run dev:frontend # Frontend on :3000
+npm run dev:demo     # Demo page on :3001
 ```
 
 ### Project Structure
@@ -106,11 +95,8 @@ simple-ab-testing/
 
 ## 📖 Documentation
 
-- [Project Plan & Strategy](./PROJECT_PLAN.md)
-- [API Documentation](./docs/API.md) *(coming soon)*
-- [SDK Guide](./docs/SDK.md) *(coming soon)*
-- [Self-Hosting Guide](./docs/DEPLOYMENT.md) *(coming soon)*
-- [Contributing Guidelines](./CONTRIBUTING.md) *(coming soon)*
+- [Getting Started Guide](./docs/GETTING_STARTED.md)
+- [Project Plan](./docs/PROJECT_PLAN.md)
 
 ## 🤝 Contributing
 

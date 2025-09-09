@@ -1,4 +1,4 @@
-import { SDKConfig, Experiment, VisitorData, TrackingEvent } from './types';
+import { SDKConfig, Experiment, TrackingEvent } from './types';
 import { getVisitorId, assignVariation, debugLog } from './utils';
 import { DOMManipulator } from './dom-manipulator';
 
@@ -6,7 +6,6 @@ class SimpleABTesting {
   private config: SDKConfig = {};
   private visitorId: string = '';
   private assignments: { [experimentId: string]: string } = {};
-  private initialized: boolean = false;
 
   /**
    * Initialize the SDK
@@ -30,7 +29,6 @@ class SimpleABTesting {
       this.processExperiments(config.experiments);
     }
 
-    this.initialized = true;
     debugLog('SDK initialized successfully');
   }
 
@@ -52,15 +50,14 @@ class SimpleABTesting {
 
       // Get or assign variation
       let variationId = this.assignments[experiment.id];
-      debugLog(`Checking assignment for experiment ${experiment.id}:`, variationId);
       
       if (!variationId) {
         variationId = assignVariation(experiment.id, this.visitorId, experiment.variations);
         this.assignments[experiment.id] = variationId;
         this.saveAssignments();
-        debugLog(`✅ NEW assignment: ${variationId} in experiment: ${experiment.name}`);
+        debugLog(`New assignment: ${variationId} for ${experiment.name}`);
       } else {
-        debugLog(`♻️ Existing assignment: ${variationId} in experiment: ${experiment.name}`);
+        debugLog(`Existing assignment: ${variationId} for ${experiment.name}`);
       }
 
       // Apply variation changes
@@ -128,14 +125,14 @@ class SimpleABTesting {
       const stored = localStorage.getItem('simple_ab_assignments');
       if (stored) {
         this.assignments = JSON.parse(stored);
-        debugLog('📂 Loaded existing assignments:', this.assignments);
+        debugLog('Loaded assignments:', this.assignments);
       } else {
         this.assignments = {};
-        debugLog('🆕 No existing assignments found - starting fresh');
+        debugLog('No existing assignments - starting fresh');
       }
     } catch (error) {
       this.assignments = {};
-      debugLog('❌ Failed to load assignments, starting fresh:', error);
+      debugLog('Failed to load assignments:', error);
     }
   }
 
