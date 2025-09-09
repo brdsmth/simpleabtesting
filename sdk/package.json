@@ -1,0 +1,19 @@
+{
+  "name": "simple-ab-testing-sdk",
+  "version": "0.1.0",
+  "description": "Lightweight A/B testing SDK",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "dev": "npm run build && npm run serve",
+    "build": "vite build",
+    "serve": "vite preview --port 3002",
+    "watch": "vite build --watch",
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0",
+    "vite": "^5.0.0"
+  }
+}
