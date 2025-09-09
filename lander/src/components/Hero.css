@@ -1,0 +1,193 @@
+.hero {
+  background: linear-gradient(135deg, #f5f7ff 0%, #ffffff 100%);
+  padding: 120px 0 80px;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+}
+
+.hero-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+}
+
+.hero-title {
+  font-size: 3.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 24px;
+  color: #1a1a1a;
+}
+
+.highlight {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-subtitle {
+  font-size: 1.3rem;
+  color: #666;
+  margin-bottom: 40px;
+  line-height: 1.6;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 60px;
+}
+
+.hero-stats {
+  display: flex;
+  gap: 40px;
+}
+
+.stat {
+  text-align: center;
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #667eea;
+  display: block;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 5px;
+}
+
+.hero-visual {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.dashboard-mockup {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  width: 100%;
+  max-width: 500px;
+}
+
+.mockup-header {
+  background: #f8f9fa;
+  padding: 15px 20px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.mockup-dots {
+  display: flex;
+  gap: 8px;
+}
+
+.mockup-dots span {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #dee2e6;
+}
+
+.mockup-dots span:first-child {
+  background: #ff5f56;
+}
+
+.mockup-dots span:nth-child(2) {
+  background: #ffbd2e;
+}
+
+.mockup-dots span:last-child {
+  background: #27ca3f;
+}
+
+.mockup-content {
+  padding: 30px;
+}
+
+.experiment-card {
+  background: #f8f9ff;
+  border: 1px solid #e0e7ff;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.experiment-status {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 15px;
+}
+
+.experiment-status.active {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.experiment-card h3 {
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+  color: #1a1a1a;
+}
+
+.experiment-metrics {
+  display: flex;
+  gap: 30px;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-label {
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.metric-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #059669;
+}
+
+@media (max-width: 768px) {
+  .hero {
+    padding: 100px 0 60px;
+    min-height: auto;
+  }
+  
+  .hero-content {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    text-align: center;
+  }
+  
+  .hero-title {
+    font-size: 2.5rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.1rem;
+  }
+  
+  .hero-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .hero-stats {
+    justify-content: center;
+    gap: 30px;
+  }
+}

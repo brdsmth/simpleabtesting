@@ -1,0 +1,77 @@
+.header {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 0;
+}
+
+.logo h2 {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.nav {
+  display: flex;
+  gap: 30px;
+}
+
+.nav a {
+  text-decoration: none;
+  color: #333;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.nav a:hover {
+  color: #667eea;
+}
+
+.github-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.github-link svg {
+  transition: transform 0.3s ease;
+}
+
+.github-link:hover svg {
+  transform: scale(1.1);
+}
+
+.header-actions {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .nav {
+    display: none;
+  }
+  
+  .header-actions .btn {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+  
+  .logo h2 {
+    font-size: 1.5rem;
+  }
+}
