@@ -37,7 +37,7 @@ const Features = () => {
   return (
     <section id="features" className="features section">
       <div className="container">
-        <h2 className="section-title">Why Choose SimpleAB?</h2>
+        <h2 className="section-title">Why Choose Simple A/B Testing?</h2>
         <p className="section-subtitle">
           Everything you loved about Google Optimize, plus the features you always wished it had.
         </p>
