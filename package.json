@@ -1,0 +1,31 @@
+{
+  "name": "simple-ab-testing",
+  "version": "0.1.0",
+  "description": "The best open-source frontend A/B testing tool for product managers",
+  "private": true,
+  "scripts": {
+    "install-all": "npm install && cd sdk && npm install && cd ../frontend && npm install && cd ../demo && npm install",
+    "dev:sdk": "cd sdk && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev", 
+    "dev:demo": "cd demo && npm run dev",
+    "build:sdk": "cd sdk && npm run build",
+    "build:frontend": "cd frontend && npm run build",
+    "build:demo": "cd demo && npm run build",
+    "build:all": "npm run build:sdk && npm run build:frontend && npm run build:demo"
+  },
+  "keywords": [
+    "ab-testing",
+    "experiments",
+    "optimization",
+    "frontend",
+    "react",
+    "typescript",
+    "open-source"
+  ],
+  "author": "brdsmth <brsmith11@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/brdsmth/simple-ab-testing.git"
+  }
+}
