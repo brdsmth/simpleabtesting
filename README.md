@@ -94,7 +94,7 @@ We welcome contributions! This project is in early development, so there are man
 - **Phase 2**: Enhanced features and analytics
 - **Phase 3**: Production-ready with advanced capabilities
 
-See our [Project Plan](./PROJECT_PLAN.md) for detailed roadmap.
+See our [Project Plan](./docs/PROJECT_PLAN.md) for detailed roadmap.
 
 ## 📊 Roadmap
 

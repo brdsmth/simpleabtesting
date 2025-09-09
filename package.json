@@ -22,10 +22,11 @@
     "typescript",
     "open-source"
   ],
-  "author": "brdsmth <brsmith11@gmail.com>",
+  "author": "brdsmth <brsmith110@gmail.com>",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/brdsmth/simple-ab-testing.git"
-  }
+    "url": "https://github.com/brdsmth/simpleabtesting.git"
+  },
+  "homepage": "https://simpleabtesting.com"
 }
