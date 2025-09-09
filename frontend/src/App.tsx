@@ -1,0 +1,87 @@
+import { useState } from 'react';
+import { Experiment } from './types';
+import ExperimentBuilder from './components/ExperimentBuilder';
+import ExperimentPreview from './components/ExperimentPreview';
+import './App.css';
+
+function App() {
+  const [experiments, setExperiments] = useState<Experiment[]>([]);
+  const [selectedExperiment, setSelectedExperiment] = useState<Experiment | null>(null);
+
+  const addExperiment = (experiment: Experiment) => {
+    setExperiments(prev => [...prev, experiment]);
+  };
+
+  const updateExperiment = (updatedExperiment: Experiment) => {
+    setExperiments(prev => 
+      prev.map(exp => exp.id === updatedExperiment.id ? updatedExperiment : exp)
+    );
+    if (selectedExperiment?.id === updatedExperiment.id) {
+      setSelectedExperiment(updatedExperiment);
+    }
+  };
+
+  const deleteExperiment = (id: string) => {
+    setExperiments(prev => prev.filter(exp => exp.id !== id));
+    if (selectedExperiment?.id === id) {
+      setSelectedExperiment(null);
+    }
+  };
+
+  return (
+    <div className="app">
+      <header className="app-header">
+        <h1>🧪 Simple A/B Testing</h1>
+        <p>Build and test your experiments</p>
+      </header>
+
+      <div className="app-content">
+        <div className="sidebar">
+          <h2>Experiments</h2>
+          <div className="experiments-list">
+            {experiments.map(experiment => (
+              <div 
+                key={experiment.id} 
+                className={`experiment-item ${selectedExperiment?.id === experiment.id ? 'selected' : ''}`}
+                onClick={() => setSelectedExperiment(experiment)}
+              >
+                <div className="experiment-name">{experiment.name}</div>
+                <div className="experiment-status">{experiment.status}</div>
+                <button 
+                  className="delete-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteExperiment(experiment.id);
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+          <button 
+            className="new-experiment-btn"
+            onClick={() => setSelectedExperiment(null)}
+          >
+            + New Experiment
+          </button>
+        </div>
+
+        <div className="main-content">
+          {selectedExperiment ? (
+            <ExperimentPreview 
+              experiment={selectedExperiment}
+              onUpdate={updateExperiment}
+            />
+          ) : (
+            <ExperimentBuilder 
+              onSave={addExperiment}
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default App;
