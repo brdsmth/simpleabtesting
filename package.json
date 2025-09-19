@@ -11,7 +11,8 @@
     "build:sdk": "cd sdk && npm run build",
     "build:frontend": "cd frontend && npm run build",
     "build:demo": "cd demo && npm run build",
-    "build:all": "npm run build:sdk && npm run build:frontend && npm run build:demo"
+    "build:all": "npm run build:sdk && npm run build:frontend && npm run build:demo",
+    "setup": "cd sdk && npm install && npm run build && cd .. && cd demo && npm install && npm run build && cd .. && cd frontend && npm install && cd .. && cd api && npm install && cd .. && cd lander && npm install && cd .."
   },
   "keywords": [
     "ab-testing",

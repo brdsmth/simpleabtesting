@@ -2,36 +2,46 @@
 
 ## Prerequisites
 - Node.js 18+
-- Modern web browser
+- Docker and Docker Compose
 
 ## Quick Start
 
-### 1. Install Dependencies
-```bash
-npm run install-all
-```
+This project uses Docker Compose to manage its services.
 
-### 2. Start Development Servers
+### 1. Setup and Run
 
-**3 terminals needed:**
+To get the application running quickly:
 
 ```bash
-# Terminal 1: SDK server (port 3002)
-npm run dev:sdk
-
-# Terminal 2: Dashboard (port 3000)  
-npm run dev:frontend
-
-# Terminal 3: Demo page (port 3001)
-npm run dev:demo
+npm run setup
+docker-compose up -d
 ```
+
+### 2. Access Services
+
+Once the services are up, you can access them at:
+
+- **Lander**: [http://localhost:8080](http://localhost:8080)
+- **Frontend Dashboard**: [http://localhost:8081](http://localhost:8081)
+- **API (serves SDK)**: [http://localhost:3000](http://localhost:3000)
+- **Demo Application**: [http://localhost:8082](http://localhost:8082)
 
 ### 3. Create Your First Experiment
 
-1. **Dashboard**: Go to http://localhost:3000
-2. **Create experiment** with variations and DOM changes
-3. **Copy generated SDK code**
-4. **Test it**: Go to http://localhost:3001 to see it working
+1. Open the Frontend Dashboard: [http://localhost:8081](http://localhost:8081)
+2. Create a new experiment with variations.
+3. The SDK is served by the `api` service at [http://localhost:3000/sdk.js](http://localhost:3000/sdk.js). The demo page is already configured to load it.
+4. Test it on the Demo page: [http://localhost:8082](http://localhost:8082)
+
+### 4. Testing A/B Variations on the Demo Page
+
+To see different A/B variations on the demo page, you need to reset your visitor ID and assignments. The demo page provides buttons for this:
+
+- **Clear Assignments**: Clears only the experiment assignments.
+- **Clear Events**: Clears only the tracking events.
+- **Clear Visitor ID (Full Reset)**: Clears visitor ID, assignments, and events. This is recommended to get a new variation.
+
+After clicking "Clear Visitor ID (Full Reset)", refresh the demo page ([http://localhost:8082](http://localhost:8082)) to be assigned a new variation.
 
 ## Example Usage
 
@@ -39,7 +49,7 @@ npm run dev:demo
 
 ```html
 <!-- Add to your website -->
-<script src="http://localhost:3002/simple-ab-testing.umd.js"></script>
+<script src="http://localhost:3000/sdk.js"></script>
 <script>
 SimpleABTesting.init({
   debug: true,
@@ -89,7 +99,7 @@ SimpleABTesting.track('button-test', 'conversion');
 ## Troubleshooting
 
 **SDK not loading?**
-- Check that SDK server is running on port 3002
+- Check that the `api` service is running (port 3000)
 - Look for errors in browser console
 
 **No variations showing?**  
@@ -98,18 +108,18 @@ SimpleABTesting.track('button-test', 'conversion');
 - Ensure variation weights sum to 100
 
 **Always same variation?**
-- This is correct! Same visitor gets same variation
-- Clear localStorage to simulate new visitor
-- Use `SimpleABTesting.reset()` to reassign
+- This is expected behavior for consistent user experience.
+- To see a new variation, use the "Clear Visitor ID (Full Reset)" button on the demo page, or run `window.SimpleABTesting.reset()` in the browser console, then refresh the page.
 
 ## File Structure
 
 ```
 simple-ab-testing/
-├── sdk/           # TypeScript SDK source
-├── frontend/      # React dashboard  
+├── api/           # Server for SDK
 ├── demo/          # Demo page
-└── README.md      # Main documentation
+├── docs/          # Documentation
+├── frontend/      # React dashboard  
+├── lander/        # Homepage
+├── sdk/           # TypeScript SDK source
+└── README.md
 ```
-
-That's it! Simple A/B testing with minimal setup.

@@ -8,84 +8,97 @@
 
 Simple A/B Testing is an open-source alternative to Google Optimize, designed specifically for product managers who want to run frontend experiments without complexity.
 
-## ✨ Features
+## Features
 
-### 🎯 Core Features
+### Core Features
 - **Visual Experiment Editor**: Create A/B tests without coding
 - **Lightweight SDK**: < 50KB impact on your site
 - **Real-time Analytics**: Statistical significance and conversion tracking
 - **Easy Integration**: One script tag to get started
 - **Frontend-First**: Optimized for UI/UX testing
 
-### 🚀 Coming Soon
+### Coming Soon
 - Multivariate testing
 - Advanced targeting (geo, device, etc.)
 - Heatmaps and session recordings
 - Third-party integrations
 
-## 🏁 Quick Start
+## Quick Start
 
-### 1. Clone and Install
+This project uses Docker Compose to manage its services.
+
+### 1. Setup and Run
+
+To get the application running quickly:
+
 ```bash
-git clone https://github.com/yourusername/simple-ab-testing
-cd simple-ab-testing
-npm run install-all
+npm run setup
+docker-compose up -d
 ```
 
-### 2. Start Development Servers
-```bash
-# Terminal 1: Start SDK development server (port 3002)
-npm run dev:sdk
+### 2. Access Services
 
-# Terminal 2: Start Frontend dashboard (port 3000)
-npm run dev:frontend
+Once the services are up, you can access them at:
 
-# Terminal 3: Start Demo page (port 3001)
-npm run dev:demo
-```
+- **Lander**: [http://localhost:8080](http://localhost:8080)
+- **Frontend Dashboard**: [http://localhost:8081](http://localhost:8081)
+- **API (serves SDK)**: [http://localhost:3000](http://localhost:3000)
+- **Demo Application**: [http://localhost:8082](http://localhost:8082)
 
 ### 3. Create Your First Experiment
-1. Open http://localhost:3000 (Frontend Dashboard)
-2. Create a new experiment with variations
-3. Copy the generated SDK code
-4. Test it on http://localhost:3001 (Demo Page)
 
-### 4. See It In Action
-- **Dashboard**: http://localhost:3000 - Build experiments
-- **Demo Page**: http://localhost:3001 - See experiments running
-- **SDK**: http://localhost:3002 - The compiled SDK file
+1. Open the Frontend Dashboard: [http://localhost:8081](http://localhost:8081)
+2. Create a new experiment with variations.
+3. The SDK is served by the `api` service at [http://localhost:3000/sdk.js](http://localhost:3000/sdk.js). The demo page is already configured to load it.
+4. Test it on the Demo page: [http://localhost:8082](http://localhost:8082)
 
-## 🏗️ Architecture
+### 4. Testing A/B Variations on the Demo Page
 
-```
-Frontend Dashboard (React + TypeScript)
-           ↕
-Client SDK (TypeScript) → Your Website
-```
+To see different A/B variations on the demo page, you need to reset your visitor ID and assignments. The demo page provides buttons for this:
 
-## 🛠️ Development
+- **Clear Assignments**: Clears only the experiment assignments.
+- **Clear Events**: Clears only the tracking events.
+- **Clear Visitor ID (Full Reset)**: Clears visitor ID, assignments, and events. This is recommended to get a new variation.
+
+After clicking "Clear Visitor ID (Full Reset)", refresh the demo page ([http://localhost:8082](http://localhost:8082)) to be assigned a new variation.
+
+## Development
 
 ### Prerequisites
 - Node.js 18+
+- Docker and Docker Compose
 - Modern web browser
 
 ### Local Setup
-```bash
-# Install dependencies
-npm run install-all
 
-# Start development servers
-npm run dev:sdk      # SDK server on :3002
-npm run dev:frontend # Frontend on :3000
-npm run dev:demo     # Demo page on :3001
+1.  **Install all dependencies and build local assets:**
+    ```bash
+    npm run setup
+    ```
+    *(This script will navigate into each service directory, install dependencies, and build the SDK and Demo applications.)*
+
+2.  **Start all services with Docker Compose:**
+    ```bash
+    docker-compose up -d
+    ```
+
+3.  **Access Services:**
+    - **Lander**: [http://localhost:8080](http://localhost:8080)
+    - **Frontend Dashboard**: [http://localhost:8081](http://localhost:8081)
+    - **API (serves SDK)**: [http://localhost:3000](http://localhost:3000)
+    - **Demo Application**: [http://localhost:8082](http://localhost:8082)
+
+To stop the services:
+```bash
+docker-compose down
 ```
 
-## 📖 Documentation
+## Documentation
 
 - [Getting Started Guide](./docs/GETTING_STARTED.md)
 - [Project Plan](./docs/PROJECT_PLAN.md)
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! This project is in early development, so there are many opportunities to get involved.
 
@@ -96,13 +109,13 @@ We welcome contributions! This project is in early development, so there are man
 
 See our [Project Plan](./docs/PROJECT_PLAN.md) for detailed roadmap.
 
-## 📊 Roadmap
+## Roadmap
 
 ### MVP (Phase 1) - Weeks 1-4
 - [x] Project setup and planning
-- [ ] User authentication system
+- [x] Core SDK functionality
 - [ ] Basic experiment management
-- [ ] Core SDK functionality
+- [ ] User authentication system
 - [ ] Simple analytics dashboard
 
 ### Enhanced Features (Phase 2) - Weeks 5-8
@@ -117,7 +130,7 @@ See our [Project Plan](./docs/PROJECT_PLAN.md) for detailed roadmap.
 - [ ] Docker containerization
 - [ ] Comprehensive documentation
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
