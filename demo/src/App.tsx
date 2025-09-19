@@ -11,7 +11,7 @@ function App() {
 
   useEffect(() => {
     const script = document.createElement('script');
-    script.src = 'http://localhost:3002/simple-ab-testing.umd.js';
+    script.src = 'http://localhost:3000/sdk.js';
     script.onload = () => {
       window.SimpleABTesting.init({
         debug: true,
