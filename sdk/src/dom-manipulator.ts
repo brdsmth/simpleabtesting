@@ -6,27 +6,23 @@ export class DOMManipulator {
    * Apply a set of DOM changes
    */
   static applyChanges(changes: DOMChange[]): void {
+    debugLog('Applying changes:', changes);
     changes.forEach(change => {
-      try {
-        this.applyChange(change);
-      } catch (error) {
-        console.warn('[SimpleAB] Failed to apply change:', change, error);
-      }
+      this.waitForElement(change.selector, (elements) => {
+        try {
+          this.applyChange(change, elements);
+        } catch (error) {
+          console.warn('[SimpleAB] Failed to apply change:', change, error);
+        }
+      });
     });
   }
 
   /**
-   * Apply a single DOM change
+   * Apply a single DOM change to a set of elements
    */
-  private static applyChange(change: DOMChange): void {
-    const elements = document.querySelectorAll(change.selector);
-    
-    if (elements.length === 0) {
-      debugLog(`No elements found for selector: ${change.selector}`);
-      return;
-    }
-
-    debugLog(`Applying ${change.type} change to ${elements.length} elements:`, change);
+  private static applyChange(change: DOMChange, elements: NodeListOf<Element>): void {
+    debugLog(`Applying ${change.type} change to ${elements.length} elements for selector: ${change.selector}`);
 
     elements.forEach(element => {
       switch (change.type) {
@@ -46,9 +42,45 @@ export class DOMManipulator {
           this.changeClass(element, change.value);
           break;
         default:
-          console.warn(`Unknown change type: ${change.type}`);
+          console.warn(`[SimpleAB] Unknown change type: ${change.type}`);
       }
     });
+  }
+
+  /**
+   * Wait for an element to appear in the DOM and then execute a callback
+   */
+  private static waitForElement(selector: string, callback: (elements: NodeListOf<Element>) => void): void {
+    const elements = document.querySelectorAll(selector);
+    if (elements.length > 0) {
+      debugLog(`Elements found immediately for selector: ${selector}`);
+      callback(elements);
+      return;
+    }
+
+    debugLog(`Waiting for elements with selector: ${selector}`);
+    const observer = new MutationObserver((mutations, obs) => {
+      const elements = document.querySelectorAll(selector);
+      if (elements.length > 0) {
+        debugLog(`Elements found after mutation for selector: ${selector}`);
+        obs.disconnect();
+        callback(elements);
+      }
+    });
+
+    observer.observe(document.documentElement, {
+      childList: true,
+      subtree: true
+    });
+
+    // Optional: Timeout to stop observing after a while
+    setTimeout(() => {
+      const elements = document.querySelectorAll(selector);
+      if (elements.length === 0) {
+        debugLog(`Timeout waiting for selector: ${selector}`);
+        observer.disconnect();
+      }
+    }, 5000); // 5 seconds
   }
 
   private static changeText(element: Element, value: string): void {

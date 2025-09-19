@@ -9,6 +9,21 @@ declare global {
 function App() {
   const [sdkData, setSdkData] = useState<any>(null);
 
+  const clearAssignments = () => {
+    localStorage.removeItem('simple_ab_assignments');
+    window.location.reload();
+  };
+
+  const clearEvents = () => {
+    localStorage.removeItem('simple_ab_events');
+    window.location.reload();
+  };
+
+  const clearVisitorId = () => {
+    window.SimpleABTesting.reset();
+    window.location.reload();
+  };
+
   useEffect(() => {
     const script = document.createElement('script');
     script.src = 'http://localhost:3000/sdk.js';
@@ -82,6 +97,12 @@ function App() {
       <button onClick={() => window.SimpleABTesting?.track('test', 'conversion')}>
         Test Button
       </button>
+
+      <div style={{ marginTop: '20px' }}>
+        <button onClick={clearAssignments} style={{ marginRight: '10px' }}>Clear Assignments</button>
+        <button onClick={clearEvents} style={{ marginRight: '10px' }}>Clear Events</button>
+        <button onClick={clearVisitorId}>Clear Visitor ID (Full Reset)</button>
+      </div>
       
       <div style={{ marginTop: '20px', background: '#f5f5f5', padding: '15px', borderRadius: '5px' }}>
         <h3>SDK Status:</h3>
