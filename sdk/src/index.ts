@@ -10,8 +10,11 @@ class SimpleABTesting {
   /**
    * Initialize the SDK
    */
-  init(config: SDKConfig): void {
-    this.config = { ...config };
+  async init(config: SDKConfig): Promise<void> {
+    this.config = { 
+      apiUrl: 'http://localhost:3000',
+      ...config 
+    };
     this.visitorId = getVisitorId();
     
     // Store debug flag globally so debugLog can access it
@@ -24,12 +27,41 @@ class SimpleABTesting {
     // Load existing assignments from localStorage
     this.loadAssignments();
 
-    // Process experiments if provided
-    if (config.experiments) {
+    // Fetch experiments if API key is provided
+    if (config.apiKey) {
+      try {
+        const experiments = await this.fetchExperiments(config.apiKey);
+        this.processExperiments(experiments);
+      } catch (error) {
+        console.error('[SimpleAB] Failed to fetch experiments:', error);
+        debugLog('Failed to fetch experiments', error);
+      }
+    } else if (config.experiments) {
+      // Process experiments if provided directly
       this.processExperiments(config.experiments);
     }
 
     debugLog('SDK initialized successfully');
+  }
+
+  /**
+   * Fetch experiments from API using API key
+   */
+  private async fetchExperiments(apiKey: string): Promise<Experiment[]> {
+    const url = `${this.config.apiUrl}/experiments?apiKey=${encodeURIComponent(apiKey)}`;
+    
+    debugLog('Fetching experiments from API', { url });
+    
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    debugLog('Experiments fetched successfully', data);
+    
+    return data.experiments || [];
   }
 
   /**
@@ -202,14 +234,26 @@ if (typeof window !== 'undefined') {
   (window as any).SimpleABTesting = sdk;
   
   // Check for auto-init from script tag attributes
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', async () => {
     const script = document.querySelector('script[data-simple-ab]');
     if (script) {
       const config: SDKConfig = {
         debug: script.getAttribute('data-debug') === 'true'
       };
       
-      // Look for experiments in data attribute
+      // Look for API key in data attribute
+      const apiKey = script.getAttribute('data-api-key');
+      if (apiKey) {
+        config.apiKey = apiKey;
+      }
+      
+      // Look for custom API URL
+      const apiUrl = script.getAttribute('data-api-url');
+      if (apiUrl) {
+        config.apiUrl = apiUrl;
+      }
+      
+      // Look for experiments in data attribute (fallback)
       const experimentsData = script.getAttribute('data-experiments');
       if (experimentsData) {
         try {
@@ -219,7 +263,7 @@ if (typeof window !== 'undefined') {
         }
       }
       
-      sdk.init(config);
+      await sdk.init(config);
     }
   });
 }

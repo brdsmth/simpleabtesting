@@ -1,6 +1,8 @@
 export interface SDKConfig {
   debug?: boolean;
   experiments?: Experiment[];
+  apiKey?: string;
+  apiUrl?: string;
 }
 
 export interface Experiment {
