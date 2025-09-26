@@ -43,11 +43,37 @@ export default function ExperimentPreview({ experiment, onUpdate }: ExperimentPr
     }
   };
 
-  const openDemo = () => {
-    // Generate demo URL with experiment data
-    const experimentData = encodeURIComponent(JSON.stringify([experiment]));
-    const demoUrl = `http://localhost:3001?experiments=${experimentData}`;
-    window.open(demoUrl, '_blank');
+  const openDemo = async () => {
+    try {
+      // Generate a temporary API key for this demo
+      const tempApiKey = `demo-${experiment.id}-${Date.now()}`;
+      
+      // Store the experiment in the API with the temporary key
+      const response = await fetch('http://localhost:3000/demo/store-experiment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          apiKey: tempApiKey,
+          experiment: experiment
+        })
+      });
+      
+      if (response.ok) {
+        // Open demo with the API key
+        const demoUrl = `http://localhost:8082?apiKey=${tempApiKey}`;
+        window.open(demoUrl, '_blank');
+      } else {
+        console.error('Failed to store experiment for demo');
+        // Fallback: open demo with default API key
+        window.open('http://localhost:8082', '_blank');
+      }
+    } catch (error) {
+      console.error('Error opening demo:', error);
+      // Fallback: open demo with default API key  
+      window.open('http://localhost:8082', '_blank');
+    }
   };
 
   return (
