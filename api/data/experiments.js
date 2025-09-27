@@ -59,7 +59,7 @@ const experimentsDatabase = {
             {
               "selector": "h1",
               "type": "text",
-              "value": "🔥 Simple A/B Testing Demo"
+              "value": "Simple A/B Testing Demo"
             }
           ]
         }
