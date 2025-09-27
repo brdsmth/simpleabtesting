@@ -216,6 +216,9 @@ class SimpleABTesting {
       const result = await response.json();
       debugLog('Event sent successfully', result);
       
+      // Also store locally for debugging purposes
+      this.storeEvent(event);
+      
     } catch (error) {
       console.error('[SimpleAB] Failed to send event to server:', error);
       debugLog('Failed to send event, storing locally as fallback', error);
