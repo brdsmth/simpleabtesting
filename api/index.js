@@ -5,6 +5,7 @@ const cors = require('cors');
 const experimentsRouter = require('./routes/experiments');
 const demoRouter = require('./routes/demo');
 const sdkRouter = require('./routes/sdk');
+const analyticsRouter = require('./routes/analytics');
 
 const app = express();
 const port = 3000;
@@ -16,6 +17,7 @@ app.use(express.json());
 // Routes
 app.use('/experiments', experimentsRouter);
 app.use('/demo', demoRouter);
+app.use('/analytics', analyticsRouter);
 app.use('/', sdkRouter);
 
 // Root endpoint
@@ -27,6 +29,11 @@ app.get('/', (req, res) => {
       experiments: {
         "GET /experiments?apiKey={key}": "Fetch experiments by API key",
         "POST /experiments": "Save/update an experiment"
+      },
+      analytics: {
+        "POST /analytics/track": "Track an analytics event",
+        "GET /analytics?apiKey={key}": "Get analytics events",
+        "GET /analytics/summary?apiKey={key}": "Get analytics summary"
       },
       demo: {
         "POST /demo/store-experiment": "Store temporary experiment for demo"
@@ -43,6 +50,9 @@ app.listen(port, () => {
   console.log(`Available endpoints:`);
   console.log(`  - GET  /experiments?apiKey={key}`);
   console.log(`  - POST /experiments`);
+  console.log(`  - POST /analytics/track`);
+  console.log(`  - GET  /analytics?apiKey={key}`);
+  console.log(`  - GET  /analytics/summary?apiKey={key}`);
   console.log(`  - POST /demo/store-experiment`);
   console.log(`  - GET  /sdk.js`);
 });
