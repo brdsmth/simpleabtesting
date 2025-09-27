@@ -167,7 +167,7 @@ export default function ExperimentPreview({ experiment, onUpdate }: ExperimentPr
           Use the demo page to see how your experiment works:
         </p>
         <button className="btn btn-primary" onClick={openDemo}>
-          🚀 Open Demo Page
+          Open Demo Page
         </button>
         <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: '#666' }}>
           The demo page will show your experiment in action. Refresh to see different variations.
