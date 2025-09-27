@@ -32,4 +32,6 @@ export interface TrackingEvent {
   variationId: string;
   eventType: 'view' | 'conversion';
   timestamp: number;
+  visitorId?: string;
+  url?: string;
 }

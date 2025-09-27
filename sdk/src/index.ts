@@ -140,13 +140,23 @@ class SimpleABTesting {
       experimentId,
       variationId,
       eventType,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      visitorId: this.visitorId,
+      url: typeof window !== 'undefined' ? window.location.href : ''
     };
 
     debugLog('Tracking event:', event);
 
-    // Store event locally for now (in a real implementation, this would be sent to a server)
-    this.storeEvent(event);
+    // Send event to server if API key is available
+    debugLog('API key check:', { hasApiKey: !!this.config.apiKey, apiKey: this.config.apiKey });
+    if (this.config.apiKey) {
+      debugLog('Sending to server...');
+      this.sendEventToServer(event);
+    } else {
+      debugLog('No API key, storing locally');
+      // fallback, store event locally if no API key
+      this.storeEvent(event);
+    }
   }
 
   /**
@@ -176,6 +186,42 @@ class SimpleABTesting {
       localStorage.setItem('simple_ab_assignments', JSON.stringify(this.assignments));
     } catch (error) {
       debugLog('Failed to save assignments:', error);
+    }
+  }
+
+  /**
+   * Send tracking event to server
+   */
+  private async sendEventToServer(event: TrackingEvent): Promise<void> {
+    try {
+      const url = `${this.config.apiUrl}/analytics/track`;
+      
+      debugLog('Sending event to server', { url, event });
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          apiKey: this.config.apiKey,
+          event
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      debugLog('Event sent successfully', result);
+      
+    } catch (error) {
+      console.error('[SimpleAB] Failed to send event to server:', error);
+      debugLog('Failed to send event, storing locally as fallback', error);
+      
+      // Fallback: store locally if server request fails
+      this.storeEvent(event);
     }
   }
 
