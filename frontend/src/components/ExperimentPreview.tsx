@@ -45,24 +45,24 @@ export default function ExperimentPreview({ experiment, onUpdate }: ExperimentPr
 
   const openDemo = async () => {
     try {
-      // Generate a temporary API key for this demo
-      const tempApiKey = `demo-${experiment.id}-${Date.now()}`;
+      // Use the consistent demo API key instead of generating temporary ones
+      const apiKey = 'demo-api-key-123';
       
-      // Store the experiment in the API with the temporary key
+      // Store/update the experiment in the API with the demo key
       const response = await fetch('http://localhost:3000/demo/store-experiment', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          apiKey: tempApiKey,
+          apiKey: apiKey,
           experiment: experiment
         })
       });
       
       if (response.ok) {
-        // Open demo with the API key
-        const demoUrl = `http://localhost:8082?apiKey=${tempApiKey}`;
+        // Open demo with the consistent API key
+        const demoUrl = `http://localhost:8082?apiKey=${apiKey}`;
         window.open(demoUrl, '_blank');
       } else {
         console.error('Failed to store experiment for demo');
