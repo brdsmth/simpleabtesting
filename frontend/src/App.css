@@ -23,15 +23,26 @@ body {
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-.app-header h1 {
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-left h1 {
   font-size: 1.5rem;
   margin-bottom: 0.25rem;
   color: #2563eb;
 }
 
-.app-header p {
+.header-left p {
   color: #666;
   font-size: 0.9rem;
+}
+
+.header-nav {
+  display: flex;
+  gap: 0.5rem;
 }
 
 .app-content {
@@ -331,16 +342,18 @@ body {
   border: 2px solid #e5e7eb;
   color: #6b7280;
   padding: 0.5rem 1rem;
-  margin-right: 0.5rem;
   border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
   transition: all 0.2s;
+  text-decoration: none;
+  display: inline-block;
 }
 
 .tab-btn:hover {
   border-color: #d1d5db;
   color: #374151;
+  text-decoration: none;
 }
 
 .tab-btn.active {
@@ -352,4 +365,6 @@ body {
 .tab-btn.active:hover {
   background: #2563eb;
   border-color: #2563eb;
+  color: white;
+  text-decoration: none;
 }

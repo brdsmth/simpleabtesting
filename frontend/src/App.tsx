@@ -1,150 +1,51 @@
-import { useState, useEffect } from 'react';
-import { Experiment } from './types';
-import ExperimentBuilder from './components/ExperimentBuilder';
-import ExperimentPreview from './components/ExperimentPreview';
-import Analytics from './components/Analytics';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import ExperimentsPage from './pages/ExperimentsPage';
+import AnalyticsPage from './pages/AnalyticsPage';
 import './App.css';
 
-const API_KEY = 'demo-api-key-123'; // Consistent API key across the app
-
-function App() {
-  const [experiments, setExperiments] = useState<Experiment[]>([]);
-  const [selectedExperiment, setSelectedExperiment] = useState<Experiment | null>(null);
-  const [currentView, setCurrentView] = useState<'experiments' | 'analytics'>('experiments');
-  const [loading, setLoading] = useState(true);
-
-  // Fetch experiments from API on startup
-  useEffect(() => {
-    const fetchExperiments = async () => {
-      try {
-        const response = await fetch(`http://localhost:3000/experiments?apiKey=${API_KEY}`);
-        if (response.ok) {
-          const data = await response.json();
-          const apiExperiments = data.experiments || [];
-          setExperiments(apiExperiments);
-          
-          // Select the first experiment by default
-          if (apiExperiments.length > 0) {
-            setSelectedExperiment(apiExperiments[0]);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch experiments:', error);
-        // If API fails, we'll just show empty state
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchExperiments();
-  }, []);
-
-  const addExperiment = (experiment: Experiment) => {
-    setExperiments(prev => [...prev, experiment]);
-  };
-
-  const updateExperiment = (updatedExperiment: Experiment) => {
-    setExperiments(prev => 
-      prev.map(exp => exp.id === updatedExperiment.id ? updatedExperiment : exp)
-    );
-    if (selectedExperiment?.id === updatedExperiment.id) {
-      setSelectedExperiment(updatedExperiment);
-    }
-  };
-
-  const deleteExperiment = (id: string) => {
-    setExperiments(prev => prev.filter(exp => exp.id !== id));
-    if (selectedExperiment?.id === id) {
-      setSelectedExperiment(null);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="app">
-        <header className="app-header">
-          <h1>Simple A/B Testing</h1>
-          <p>Loading experiments...</p>
-        </header>
-      </div>
-    );
-  }
-
+function Navigation() {
+  const location = useLocation();
+  
   return (
-    <div className="app">
-      <header className="app-header">
-        <h1>Simple A/B Testing</h1>
-        <p>Build and test your experiments</p>
-        <div style={{ marginTop: '1rem' }}>
-          <button 
-            className={`tab-btn ${currentView === 'experiments' ? 'active' : ''}`}
-            onClick={() => setCurrentView('experiments')}
+    <header className="app-header">
+      <div className="header-content">
+        <div className="header-left">
+          <h1>Simple A/B Testing</h1>
+          <p>Build and test your experiments</p>
+        </div>
+        <div className="header-nav">
+          <Link 
+            to="/experiments" 
+            className={`tab-btn ${location.pathname === '/experiments' || location.pathname === '/' ? 'active' : ''}`}
           >
             Experiments
-          </button>
-          <button 
-            className={`tab-btn ${currentView === 'analytics' ? 'active' : ''}`}
-            onClick={() => setCurrentView('analytics')}
+          </Link>
+          <Link 
+            to="/analytics" 
+            className={`tab-btn ${location.pathname === '/analytics' ? 'active' : ''}`}
           >
             Analytics
-          </button>
+          </Link>
         </div>
-      </header>
-
-      <div className="app-content">
-        {currentView === 'experiments' ? (
-          <>
-            <div className="sidebar">
-              <h2>Experiments</h2>
-              <div className="experiments-list">
-                {experiments.map(experiment => (
-                  <div 
-                    key={experiment.id} 
-                    className={`experiment-item ${selectedExperiment?.id === experiment.id ? 'selected' : ''}`}
-                    onClick={() => setSelectedExperiment(experiment)}
-                  >
-                    <div className="experiment-name">{experiment.name}</div>
-                    <div className="experiment-status">{experiment.status}</div>
-                    <button 
-                      className="delete-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteExperiment(experiment.id);
-                      }}
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <button 
-                className="new-experiment-btn"
-                onClick={() => setSelectedExperiment(null)}
-              >
-                + New Experiment
-              </button>
-            </div>
-
-            <div className="main-content">
-              {selectedExperiment ? (
-                <ExperimentPreview 
-                  experiment={selectedExperiment}
-                  onUpdate={updateExperiment}
-                />
-              ) : (
-                <ExperimentBuilder 
-                  onSave={addExperiment}
-                />
-              )}
-            </div>
-          </>
-        ) : (
-          <div className="main-content" style={{ gridColumn: '1 / -1' }}>
-            <Analytics />
-          </div>
-        )}
       </div>
-    </div>
+    </header>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <div className="app">
+        <Navigation />
+        <div className="app-content">
+          <Routes>
+            <Route path="/" element={<ExperimentsPage />} />
+            <Route path="/experiments" element={<ExperimentsPage />} />
+            <Route path="/analytics" element={<AnalyticsPage />} />
+          </Routes>
+        </div>
+      </div>
+    </Router>
   );
 }
 
