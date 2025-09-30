@@ -99,7 +99,11 @@ export default function Analytics() {
         <div style={{ color: 'red', padding: '1rem', background: '#fee', borderRadius: '4px' }}>
           Error: {error}
         </div>
-        <button onClick={fetchAnalytics} style={{ marginTop: '1rem' }}>
+        <button 
+          className="btn btn-primary" 
+          onClick={fetchAnalytics} 
+          style={{ marginTop: '1rem' }}
+        >
           Retry
         </button>
       </div>
@@ -114,7 +118,11 @@ export default function Analytics() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <h2>Analytics Dashboard</h2>
-        <button onClick={fetchAnalytics} disabled={loading}>
+        <button 
+          className={`btn btn-secondary ${loading ? 'btn-loading' : ''}`}
+          onClick={fetchAnalytics} 
+          disabled={loading}
+        >
           {loading ? 'Refreshing...' : 'Refresh'}
         </button>
       </div>
@@ -150,37 +158,55 @@ export default function Analytics() {
         {Object.keys(analyticsData.summary.experiments).length === 0 ? (
           <p style={{ color: '#666', fontStyle: 'italic' }}>No experiment data available</p>
         ) : (
-          Object.entries(analyticsData.summary.experiments).map(([experimentId, data]) => (
-            <div key={experimentId} className="experiment-analytics">
-              <h4>Experiment: {experimentId}</h4>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.5rem', marginBottom: '1rem' }}>
-                <div><strong>Views:</strong> {data.views}</div>
-                <div><strong>Conversions:</strong> {data.conversions}</div>
-                <div><strong>Conversion Rate:</strong> {calculateConversionRate(data.views, data.conversions)}</div>
-              </div>
-              
-              {/* Variations Performance */}
-              <div style={{ marginLeft: '1rem' }}>
-                <strong>Variations:</strong>
-                {Object.entries(data.variations).map(([variationId, varData]) => (
-                  <div key={variationId} style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: '150px 80px 80px 100px', 
-                    gap: '1rem', 
-                    padding: '0.5rem',
-                    background: '#f9f9f9',
-                    margin: '0.25rem 0',
-                    borderRadius: '4px'
-                  }}>
-                    <div><strong>{variationId}</strong></div>
-                    <div>{varData.views} views</div>
-                    <div>{varData.conversions} conv</div>
-                    <div>{calculateConversionRate(varData.views, varData.conversions)}</div>
-                  </div>
-                ))}
-              </div>
+          <div className="experiments-table">
+            <div className="experiments-header">
+              <div>Experiment</div>
+              <div>Variation</div>
+              <div>Views</div>
+              <div>Conversions</div>
+              <div>Conversion Rate</div>
             </div>
-          ))
+            <div className="experiments-list">
+              {Object.entries(analyticsData.summary.experiments).map(([experimentId, data]) => (
+                <div key={experimentId}>
+                  {Object.entries(data.variations).map(([variationId, varData], index) => (
+                    <div key={variationId} className="experiment-row">
+                      <div className="exp-col-experiment">
+                        {index === 0 ? experimentId : ''}
+                      </div>
+                      <div className="exp-col-variation">
+                        <span className={`variation-badge ${variationId === 'control' ? 'variation-control' : 'variation-test'}`}>
+                          {variationId}
+                        </span>
+                      </div>
+                      <div className="exp-col-views">{varData.views}</div>
+                      <div className="exp-col-conversions">{varData.conversions}</div>
+                      <div className="exp-col-rate">
+                        <span className="conversion-rate">
+                          {calculateConversionRate(varData.views, varData.conversions)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  {Object.keys(data.variations).length > 1 && (
+                    <div className="experiment-total">
+                      <div className="exp-col-experiment"></div>
+                      <div className="exp-col-variation">
+                        <strong>Total</strong>
+                      </div>
+                      <div className="exp-col-views"><strong>{data.views}</strong></div>
+                      <div className="exp-col-conversions"><strong>{data.conversions}</strong></div>
+                      <div className="exp-col-rate">
+                        <strong className="conversion-rate">
+                          {calculateConversionRate(data.views, data.conversions)}
+                        </strong>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </div>
 
@@ -190,18 +216,27 @@ export default function Analytics() {
         {recentEvents.length === 0 ? (
           <p style={{ color: '#666', fontStyle: 'italic' }}>No recent events</p>
         ) : (
-          <div className="events-list">
-            {recentEvents.map((event) => (
-              <div key={event.id} className="event-item">
-                <div style={{ display: 'grid', gridTemplateColumns: '120px 150px 100px 100px 1fr', gap: '1rem', alignItems: 'center' }}>
-                  <div><strong>{event.eventType}</strong></div>
-                  <div>{event.experimentId}</div>
-                  <div>{event.variationId}</div>
-                  <div>{formatTimestamp(event.timestamp)}</div>
-                  <div style={{ fontSize: '0.8rem', color: '#666' }}>{event.visitorId}</div>
+          <div className="events-table">
+            <div className="events-header">
+              <div>Event Type</div>
+              <div>Experiment ID</div>
+              <div>Variation</div>
+              <div>Timestamp</div>
+              <div>Visitor ID</div>
+            </div>
+            <div className="events-list">
+              {recentEvents.map((event) => (
+                <div key={event.id} className="event-item">
+                  <div className="event-col-type">
+                    <span className={`event-type-badge event-type-${event.eventType}`}>{event.eventType}</span>
+                  </div>
+                  <div className="event-col-experiment">{event.experimentId}</div>
+                  <div className="event-col-variation">{event.variationId}</div>
+                  <div className="event-col-timestamp">{formatTimestamp(event.timestamp)}</div>
+                  <div className="event-col-visitor">{event.visitorId}</div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
       </div>

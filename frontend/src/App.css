@@ -205,6 +205,15 @@ body {
   background: #dc2626;
 }
 
+.btn-loading {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.btn-loading:hover {
+  opacity: 0.7;
+}
+
 .variations {
   margin-top: 2rem;
 }
@@ -302,30 +311,137 @@ body {
   color: #1f2937;
 }
 
-.experiment-analytics {
+/* Experiments Performance Table Styles */
+.experiments-table {
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  padding: 1.5rem;
+  overflow: hidden;
   margin-bottom: 1rem;
+  margin-top: 1rem;
 }
 
-.experiment-analytics h4 {
-  margin: 0 0 1rem 0;
-  color: #1f2937;
+.experiments-header {
+  display: grid;
+  grid-template-columns: 2.5fr 1.8fr 1.2fr 1.4fr 1.4fr;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f9fafb;
+  border-bottom: 2px solid #e5e7eb;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.875rem;
+}
+
+.experiments-list {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.experiment-row {
+  display: grid;
+  grid-template-columns: 2.5fr 1.8fr 1.2fr 1.4fr 1.4fr;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #f3f4f6;
+  align-items: center;
+}
+
+.experiment-row:hover {
+  background: #f9fafb;
+}
+
+.experiment-total {
+  display: grid;
+  grid-template-columns: 2.5fr 1.8fr 1.2fr 1.4fr 1.4fr;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 2px solid #e5e7eb;
+  align-items: center;
+  background: #f8fafc;
+}
+
+/* Experiment column styles */
+.exp-col-experiment {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.8rem;
+  color: #374151;
+  font-weight: 500;
+}
+
+.exp-col-variation {
+  font-weight: 500;
+}
+
+.variation-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  letter-spacing: 0.025em;
+}
+
+.variation-control {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.variation-test {
+  background: #ddd6fe;
+  color: #5b21b6;
+}
+
+.exp-col-views,
+.exp-col-conversions {
+  font-weight: 500;
+  color: #374151;
+  text-align: left;
+}
+
+.exp-col-rate {
+  text-align: left;
+}
+
+.conversion-rate {
+  font-weight: 600;
+  color: #059669;
+}
+
+/* Events Table Styles */
+.events-table {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-top: 1rem;
+  overflow: hidden;
+}
+
+.events-header {
+  display: grid;
+  grid-template-columns: 1.2fr 2fr 1.2fr 1.8fr 2.5fr;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f9fafb;
+  border-bottom: 2px solid #e5e7eb;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.875rem;
 }
 
 .events-list {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
   max-height: 400px;
   overflow-y: auto;
 }
 
 .event-item {
+  display: grid;
+  grid-template-columns: 1.2fr 2fr 1.2fr 1.8fr 2.5fr;
+  gap: 1rem;
   padding: 0.75rem 1rem;
   border-bottom: 1px solid #f3f4f6;
+  align-items: center;
 }
 
 .event-item:last-child {
@@ -334,6 +450,66 @@ body {
 
 .event-item:hover {
   background: #f9fafb;
+}
+
+/* Event column styles */
+.event-col-type {
+  font-weight: 500;
+}
+
+.event-type-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.event-type-badge {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.event-type-view {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.event-type-conversion {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.event-type-click {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.event-col-experiment {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.event-col-variation {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.event-col-timestamp {
+  font-size: 0.8rem;
+  color: #374151;
+}
+
+.event-col-visitor {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Tab Navigation Styles */
