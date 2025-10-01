@@ -40,12 +40,36 @@ export default function ExperimentsPage() {
     setExperiments(prev => [...prev, experiment]);
   };
 
-  const updateExperiment = (updatedExperiment: Experiment) => {
-    setExperiments(prev => 
-      prev.map(exp => exp.id === updatedExperiment.id ? updatedExperiment : exp)
-    );
-    if (selectedExperiment?.id === updatedExperiment.id) {
-      setSelectedExperiment(updatedExperiment);
+  const updateExperiment = async (updatedExperiment: Experiment) => {
+    try {
+      // Save to API first
+      const response = await fetch('http://localhost:3000/experiments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          apiKey: API_KEY,
+          experiment: updatedExperiment
+        })
+      });
+
+      if (response.ok) {
+        // Update local state only if API save was successful
+        setExperiments(prev => 
+          prev.map(exp => exp.id === updatedExperiment.id ? updatedExperiment : exp)
+        );
+        if (selectedExperiment?.id === updatedExperiment.id) {
+          setSelectedExperiment(updatedExperiment);
+        }
+        console.log('Experiment updated successfully');
+      } else {
+        console.error('Failed to update experiment in API');
+        alert('Failed to save changes. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error updating experiment:', error);
+      alert('Failed to save changes. Please try again.');
     }
   };
 

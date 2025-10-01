@@ -1,16 +1,44 @@
 import { useState } from 'react';
 import { Experiment } from '../types';
+import FeatherIcon from 'feather-icons-react';
 
 interface ExperimentPreviewProps {
   experiment: Experiment;
-  onUpdate: (experiment: Experiment) => void;
+  onUpdate: (experiment: Experiment) => Promise<void>;
 }
 
 export default function ExperimentPreview({ experiment, onUpdate }: ExperimentPreviewProps) {
   const [copied, setCopied] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState(experiment.name);
 
-  const handleStatusChange = (status: 'active' | 'paused' | 'stopped') => {
-    onUpdate({ ...experiment, status });
+  const handleStatusChange = async (status: 'active' | 'paused' | 'stopped') => {
+    await onUpdate({ ...experiment, status });
+  };
+
+  const handleNameEdit = () => {
+    setIsEditingName(true);
+    setEditedName(experiment.name);
+  };
+
+  const handleNameSave = async () => {
+    if (editedName.trim() && editedName.trim() !== experiment.name) {
+      await onUpdate({ ...experiment, name: editedName.trim() });
+    }
+    setIsEditingName(false);
+  };
+
+  const handleNameCancel = () => {
+    setEditedName(experiment.name);
+    setIsEditingName(false);
+  };
+
+  const handleNameKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleNameSave();
+    } else if (e.key === 'Escape') {
+      handleNameCancel();
+    }
   };
 
   const generateSDKCode = () => {
@@ -79,7 +107,77 @@ export default function ExperimentPreview({ experiment, onUpdate }: ExperimentPr
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h2>{experiment.name}</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          {isEditingName ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <input
+                type="text"
+                value={editedName}
+                onChange={(e) => setEditedName(e.target.value)}
+                onKeyDown={handleNameKeyPress}
+                onBlur={handleNameSave}
+                autoFocus
+                style={{ 
+                  fontSize: '1.5rem', 
+                  fontWeight: 'bold', 
+                  border: '1px solid #ccc', 
+                  borderRadius: '4px', 
+                  padding: '0.5rem' 
+                }}
+              />
+              <button 
+                onClick={handleNameSave}
+                style={{ 
+                  padding: '0.25rem 0.5rem', 
+                  fontSize: '0.8rem',
+                  background: '#10b981',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                ✓
+              </button>
+              <button 
+                onClick={handleNameCancel}
+                style={{ 
+                  padding: '0.25rem 0.5rem', 
+                  fontSize: '0.8rem',
+                  background: '#ef4444',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                ×
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <h2 style={{ margin: 0 }}>{experiment.name}</h2>
+              <button 
+                onClick={handleNameEdit}
+                style={{ 
+                  padding: '0.25rem 0.5rem', 
+                  fontSize: '0.8rem',
+                  background: '#6b7280',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                title="Edit experiment name"
+              >
+                <FeatherIcon icon="edit-2" width={14} height={14} />
+              </button>
+            </div>
+          )}
+        </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <select
             value={experiment.status}
@@ -99,7 +197,7 @@ export default function ExperimentPreview({ experiment, onUpdate }: ExperimentPr
 
       <div className="form-group">
         <label>Experiment ID</label>
-        <input type="text" value={experiment.id} readOnly />
+        <input type="text" value={experiment.id} disabled />
       </div>
 
       <div className="form-group">

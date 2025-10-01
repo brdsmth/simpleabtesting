@@ -65,15 +65,12 @@ body {
   color: #374151;
 }
 
-.experiments-list {
-  margin-bottom: 1rem;
-}
-
 .experiment-item {
-  padding: 0.75rem;
+  padding: 1rem;
   border: 1px solid #e0e0e0;
   border-radius: 6px;
   margin-bottom: 0.5rem;
+  margin-right: 0.5rem;
   cursor: pointer;
   transition: all 0.2s;
   position: relative;
@@ -336,6 +333,7 @@ body {
 .experiments-list {
   max-height: 500px;
   overflow-y: auto;
+  margin-bottom: 1rem;
 }
 
 .experiment-row {
