@@ -1,6 +1,9 @@
 const express = require('express');
 const cors = require('cors');
 
+// Import database configuration
+const { testConnection, initializeDatabase } = require('./config/database');
+
 // Import routers
 const experimentsRouter = require('./routes/experiments');
 const demoRouter = require('./routes/demo');
@@ -45,14 +48,35 @@ app.get('/', (req, res) => {
   });
 });
 
-app.listen(port, () => {
-  console.log(`API server listening at http://localhost:${port}`);
-  console.log(`Available endpoints:`);
-  console.log(`  - GET  /experiments?apiKey={key}`);
-  console.log(`  - POST /experiments`);
-  console.log(`  - POST /analytics/track`);
-  console.log(`  - GET  /analytics?apiKey={key}`);
-  console.log(`  - GET  /analytics/summary?apiKey={key}`);
-  console.log(`  - POST /demo/store-experiment`);
-  console.log(`  - GET  /sdk.js`);
-});
+// Initialize database and start server
+const startServer = async () => {
+  try {
+    // Test database connection
+    const dbConnected = await testConnection();
+    if (!dbConnected) {
+      console.error('Failed to connect to database. Server will not start.');
+      process.exit(1);
+    }
+
+    // Initialize database tables
+    await initializeDatabase();
+
+    // Start the server
+    app.listen(port, () => {
+      console.log(`API server listening at http://localhost:${port}`);
+      console.log(`Available endpoints:`);
+      console.log(`  - GET  /experiments?apiKey={key}`);
+      console.log(`  - POST /experiments`);
+      console.log(`  - POST /analytics/track`);
+      console.log(`  - GET  /analytics?apiKey={key}`);
+      console.log(`  - GET  /analytics/summary?apiKey={key}`);
+      console.log(`  - POST /demo/store-experiment`);
+      console.log(`  - GET  /sdk.js`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error.message);
+    process.exit(1);
+  }
+};
+
+startServer();
