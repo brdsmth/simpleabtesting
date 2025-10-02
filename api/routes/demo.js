@@ -1,6 +1,6 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const experimentsMockDatabase = require('../data/experiments');
+import experimentsMockDatabase from '../data/experiments.js';
 
 // POST /demo/store-experiment - Store temporary experiment for demo purposes
 router.post('/store-experiment', (req, res) => {
@@ -25,4 +25,4 @@ router.post('/store-experiment', (req, res) => {
   });
 });
 
-module.exports = router;
+export default router;

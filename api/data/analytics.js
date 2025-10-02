@@ -16,4 +16,4 @@ const analyticsDatabase = {
   'test-key-456': []
 };
 
-module.exports = analyticsDatabase;
+export default analyticsDatabase;

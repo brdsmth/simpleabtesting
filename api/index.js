@@ -1,14 +1,14 @@
-const express = require('express');
-const cors = require('cors');
+import express from 'express';
+import cors from 'cors';
 
 // Import database configuration
-const { testConnection, initializeDatabase } = require('./config/database');
+import { testConnection, initializeDatabase } from './config/database.js';
 
 // Import routers
-const experimentsRouter = require('./routes/experiments');
-const demoRouter = require('./routes/demo');
-const sdkRouter = require('./routes/sdk');
-const analyticsRouter = require('./routes/analytics');
+import experimentsRouter from './routes/experiments.js';
+import demoRouter from './routes/demo.js';
+import sdkRouter from './routes/sdk.js';
+import analyticsRouter from './routes/analytics.js';
 
 const app = express();
 const port = 3000;

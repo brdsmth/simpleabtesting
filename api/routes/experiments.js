@@ -1,6 +1,6 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const experimentsMockDatabase = require('../data/experiments');
+import experimentsMockDatabase from '../data/experiments.js';
 
 // GET /experiments - Fetch experiments by API key
 router.get('/', (req, res) => {
@@ -61,4 +61,4 @@ router.post('/', (req, res) => {
   });
 });
 
-module.exports = router;
+export default router;

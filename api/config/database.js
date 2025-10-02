@@ -1,5 +1,8 @@
-const { Pool } = require('pg');
-require('dotenv').config();
+import pkg from 'pg';
+import dotenv from 'dotenv';
+
+const { Pool } = pkg;
+dotenv.config();
 
 // Database configuration
 const dbConfig = {
@@ -14,11 +17,11 @@ const pool = new Pool(dbConfig);
 const testConnection = async () => {
   try {
     const client = await pool.connect();
-    console.log('✅ Database connected successfully');
+    console.log('Database connected successfully');
     client.release();
     return true;
   } catch (error) {
-    console.error('❌ Database connection failed:', error.message);
+    console.error('Database connection failed:', error.message);
     return false;
   }
 };
@@ -26,7 +29,7 @@ const testConnection = async () => {
 // Initialize database tables
 const initializeDatabase = async () => {
   try {
-    console.log('🔧 Initializing database tables...');
+    console.log('Initializing database tables...');
     const client = await pool.connect();
     
     // Create experiments table
@@ -74,15 +77,15 @@ const initializeDatabase = async () => {
       CREATE INDEX IF NOT EXISTS idx_analytics_experiment_id ON analytics_events(experiment_id);
     `);
 
-    console.log('✅ Database tables initialized successfully');
+    console.log('Database tables initialized successfully');
     client.release();
   } catch (error) {
-    console.error('❌ Database initialization failed:', error.message);
+    console.error('Database initialization failed:', error.message);
     throw error;
   }
 };
 
-module.exports = {
+export {
   pool,
   testConnection,
   initializeDatabase

@@ -162,4 +162,4 @@ const experimentsDatabase = {
   ]
 };
 
-module.exports = experimentsDatabase;
+export default experimentsDatabase;

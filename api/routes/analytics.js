@@ -1,6 +1,6 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const analyticsMockDatabase = require('../data/analytics');
+import analyticsMockDatabase from '../data/analytics.js';
 
 // POST /analytics/track - Track an analytics event
 router.post('/track', (req, res) => {
@@ -165,4 +165,4 @@ router.get('/summary', (req, res) => {
   });
 });
 
-module.exports = router;
+export default router;
