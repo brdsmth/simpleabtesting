@@ -42,23 +42,24 @@ export default function ExperimentPreview({ experiment, onUpdate }: ExperimentPr
   };
 
   const generateSDKCode = () => {
-    const experimentData = JSON.stringify([experiment], null, 2);
     return `<!-- Add this script tag to your website -->
-      <script 
-        data-simple-ab="true"
-        data-debug="true" 
-        data-experiments='${experimentData.replace(/'/g, "&apos;")}'
-        src="http://localhost:3002/simple-ab-testing.umd.js">
-      </script>
+<script 
+  data-simple-ab="true"
+  data-api-key="demo-api-key-123"
+  data-api-url="http://localhost:3000"
+  data-debug="true"
+  src="http://localhost:3002/simple-ab-testing.umd.js">
+</script>
 
-      <!-- Or initialize programmatically -->
-      <script src="http://localhost:3002/simple-ab-testing.umd.js"></script>
-      <script>
-        SimpleABTesting.init({
-          debug: true,
-          experiments: ${experimentData}
-        });
-      </script>`;
+<!-- Or initialize programmatically -->
+<script src="http://localhost:3002/simple-ab-testing.umd.js"></script>
+<script>
+  SimpleABTesting.init({
+    apiKey: 'demo-api-key-123',
+    apiUrl: 'http://localhost:3000',
+    debug: true
+  });
+</script>`;
   };
 
   const copyToClipboard = async () => {
