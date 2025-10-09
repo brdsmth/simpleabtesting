@@ -1,88 +1,123 @@
 .features {
-  background: white;
+  background: var(--bg-secondary);
 }
 
 .features-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 30px;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 24px;
   margin-bottom: 80px;
 }
 
 .feature-card {
-  background: #f8f9ff;
-  border: 1px solid #e0e7ff;
-  border-radius: 12px;
-  padding: 30px;
-  text-align: center;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  text-align: left;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--brand-green) 0%, var(--brand-green-light) 100%);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
 }
 
 .feature-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 20px 40px rgba(102, 126, 234, 0.1);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--border-secondary);
+}
+
+.feature-card:hover::before {
+  transform: scaleX(1);
 }
 
 .feature-icon {
-  font-size: 3rem;
+  font-size: 2.5rem;
   margin-bottom: 20px;
   display: block;
+  opacity: 0.9;
 }
 
 .feature-title {
-  font-size: 1.3rem;
+  font-size: 1.25rem;
   font-weight: 600;
-  margin-bottom: 15px;
-  color: #1a1a1a;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
 }
 
 .feature-description {
-  color: #666;
-  line-height: 1.6;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  font-size: 0.9375rem;
 }
 
 .comparison-section {
-  background: #f8f9fa;
-  border-radius: 12px;
-  padding: 40px;
-  margin-top: 60px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-xl);
+  padding: 48px;
+  margin-top: 64px;
+  box-shadow: var(--shadow-md);
 }
 
 .comparison-title {
   font-size: 2rem;
   font-weight: 700;
   text-align: center;
-  margin-bottom: 30px;
-  color: #1a1a1a;
+  margin-bottom: 32px;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
 }
 
 .comparison-table {
-  background: white;
-  border-radius: 8px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
 }
 
 .comparison-header {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1fr;
-  background: #667eea;
-  color: white;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
   font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .comparison-row {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1fr;
-  border-bottom: 1px solid #e9ecef;
+  border-bottom: 1px solid var(--border-primary);
+  background: var(--bg-primary);
 }
 
 .comparison-row:last-child {
   border-bottom: none;
 }
 
+.comparison-row:hover {
+  background: var(--bg-secondary);
+}
+
 .comparison-cell {
-  padding: 15px 20px;
+  padding: 16px 20px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -92,32 +127,32 @@
 .comparison-cell.feature-name {
   justify-content: flex-start;
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .comparison-cell.brand {
-  background: #f0f4ff;
-  color: #667eea;
+  background: rgba(62, 207, 142, 0.1);
+  color: var(--brand-green-dark);
   font-weight: 600;
 }
 
 .comparison-header .comparison-cell.brand {
-  background: #5a6fd8;
-  color: white;
+  background: var(--brand-green);
+  color: var(--text-primary);
 }
 
 @media (max-width: 768px) {
   .features-grid {
     grid-template-columns: 1fr;
-    gap: 20px;
+    gap: 16px;
   }
   
   .feature-card {
-    padding: 25px;
+    padding: 28px;
   }
   
   .comparison-section {
-    padding: 30px 20px;
+    padding: 32px 24px;
   }
   
   .comparison-header,
@@ -128,21 +163,21 @@
   
   .comparison-cell {
     justify-content: flex-start;
-    border-bottom: 1px solid #e9ecef;
-    padding: 10px 15px;
+    border-bottom: 1px solid var(--border-primary);
+    padding: 12px 16px;
   }
   
   .comparison-cell.feature-name {
     font-weight: 600;
-    background: #f8f9fa;
+    background: var(--bg-tertiary);
   }
   
   .comparison-cell.brand {
-    background: #f0f4ff;
+    background: rgba(62, 207, 142, 0.1);
   }
   
   .comparison-header .comparison-cell.brand {
-    background: #667eea;
-    color: white;
+    background: var(--brand-green);
+    color: var(--text-primary);
   }
 }

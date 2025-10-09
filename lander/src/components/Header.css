@@ -1,44 +1,59 @@
 .header {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  background: var(--bg-overlay);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-primary);
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 1000;
+  transition: all 0.3s ease;
 }
 
 .header-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 15px 0;
+  padding: 16px 0;
 }
 
 .logo h2 {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  font-size: 1.8rem;
+  color: var(--text-primary);
+  font-size: 1.5rem;
   font-weight: 700;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo h2::before {
+  content: '';
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, var(--brand-green) 0%, var(--brand-green-dark) 100%);
+  border-radius: var(--radius-md);
+  display: inline-block;
 }
 
 .nav {
   display: flex;
-  gap: 30px;
+  gap: 32px;
+  align-items: center;
 }
 
 .nav a {
   text-decoration: none;
-  color: #333;
+  color: var(--text-secondary);
   font-weight: 500;
-  transition: color 0.3s ease;
+  font-size: 15px;
+  transition: color 0.2s ease;
+  letter-spacing: -0.01em;
 }
 
 .nav a:hover {
-  color: #667eea;
+  color: var(--text-primary);
 }
 
 .github-link {
@@ -48,16 +63,18 @@
 }
 
 .github-link svg {
-  transition: transform 0.3s ease;
+  transition: transform 0.2s ease;
+  opacity: 0.8;
 }
 
 .github-link:hover svg {
-  transform: scale(1.1);
+  transform: translateY(-1px);
+  opacity: 1;
 }
 
 .header-actions {
   display: flex;
-  gap: 15px;
+  gap: 12px;
   align-items: center;
 }
 
@@ -66,12 +83,16 @@
     display: none;
   }
   
-  .header-actions .btn {
-    padding: 10px 20px;
-    font-size: 14px;
+  .header-content {
+    padding: 12px 0;
   }
   
   .logo h2 {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
+  }
+  
+  .logo h2::before {
+    width: 28px;
+    height: 28px;
   }
 }
