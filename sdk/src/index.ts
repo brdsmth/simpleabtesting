@@ -1,11 +1,13 @@
 import { SDKConfig, Experiment, TrackingEvent } from './types';
 import { getVisitorId, assignVariation, debugLog } from './utils';
 import { DOMManipulator } from './dom-manipulator';
+import { VisualSelector } from './visual-selector';
 
 class SimpleABTesting {
   private config: SDKConfig = {};
   private visitorId: string = '';
   private assignments: { [experimentId: string]: string } = {};
+  private visualSelector: VisualSelector | null = null;
 
   /**
    * Initialize the SDK
@@ -23,6 +25,12 @@ class SimpleABTesting {
     }
     
     debugLog('Initializing SDK', { config, visitorId: this.visitorId });
+
+    // Check for visual selector mode
+    if (this.isVisualMode()) {
+      this.enableVisualMode();
+      return; // Don't run experiments in visual mode
+    }
 
     // Load existing assignments from localStorage
     this.loadAssignments();
@@ -272,6 +280,24 @@ class SimpleABTesting {
     this.assignments = {};
     this.visitorId = getVisitorId();
     debugLog('SDK reset complete');
+  }
+
+  /**
+   * Check if visual selector mode is enabled
+   */
+  private isVisualMode(): boolean {
+    if (typeof window === 'undefined') return false;
+    const params = new URLSearchParams(window.location.search);
+    return params.get('ab-visual-mode') === 'true';
+  }
+
+  /**
+   * Enable visual selector mode
+   */
+  private enableVisualMode(): void {
+    debugLog('Enabling visual selector mode');
+    this.visualSelector = new VisualSelector();
+    this.visualSelector.init();
   }
 }
 
