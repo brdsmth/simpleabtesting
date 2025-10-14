@@ -179,7 +179,7 @@ export default function ExperimentPreview({ experiment, onUpdate }: ExperimentPr
             </div>
           )}
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.25rem' }}>
           <select
             value={experiment.status}
             onChange={(e) => handleStatusChange(e.target.value as any)}
@@ -213,10 +213,12 @@ export default function ExperimentPreview({ experiment, onUpdate }: ExperimentPr
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h4>{variation.name}</h4>
               <span style={{ 
-                background: '#e5e7eb', 
+                background: 'var(--bg-tertiary)', 
+                color: 'var(--text-primary)',
                 padding: '0.25rem 0.5rem', 
                 borderRadius: '4px', 
-                fontSize: '0.8rem' 
+                fontSize: '0.8rem',
+                fontWeight: 600
               }}>
                 {variation.weight}% traffic
               </span>
@@ -241,7 +243,7 @@ export default function ExperimentPreview({ experiment, onUpdate }: ExperimentPr
                 ))}
               </div>
             ) : (
-              <p style={{ color: '#666', fontStyle: 'italic' }}>No changes defined (control)</p>
+              <p style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>No changes defined (control)</p>
             )}
           </div>
         ))}

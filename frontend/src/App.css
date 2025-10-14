@@ -258,12 +258,26 @@ body {
   font-family: inherit;
 }
 
+/* Ensure number inputs have better contrast */
+.form-group input[type="number"] {
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+}
+
+/* Remove default number input spinner styling issues */
+.form-group input[type="number"]::-webkit-inner-spin-button,
+.form-group input[type="number"]::-webkit-outer-spin-button {
+  opacity: 1;
+}
+
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
   border-color: var(--brand-green);
   box-shadow: 0 0 0 3px rgba(62, 207, 142, 0.1);
+  background: var(--bg-primary);
 }
 
 .btn {
@@ -375,6 +389,14 @@ body {
   grid-template-columns: 2fr 1fr 2fr auto;
   gap: 0.5rem;
   align-items: center;
+}
+
+.change-row .form-group input {
+  padding-right: 4.5rem;
+}
+
+.change-row .form-group button {
+  white-space: nowrap;
 }
 
 .preview-section {

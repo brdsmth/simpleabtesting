@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Experiment, Variation, DOMChange } from '../types';
+import VisualSelector from './VisualSelector';
 
 interface ExperimentBuilderProps {
   onSave: (experiment: Experiment) => void;
@@ -8,6 +9,8 @@ interface ExperimentBuilderProps {
 export default function ExperimentBuilder({ onSave }: ExperimentBuilderProps) {
   const [name, setName] = useState('');
   const [trafficAllocation, setTrafficAllocation] = useState(100);
+  const [showVisualSelector, setShowVisualSelector] = useState(false);
+  const [activeSelectorTarget, setActiveSelectorTarget] = useState<{ variationIndex: number; changeIndex: number } | null>(null);
   const [variations, setVariations] = useState<Variation[]>([
     {
       id: 'control',
@@ -66,6 +69,24 @@ export default function ExperimentBuilder({ onSave }: ExperimentBuilderProps) {
     const updated = [...variations];
     updated[variationIndex].changes.splice(changeIndex, 1);
     setVariations(updated);
+  };
+
+  const openVisualSelector = (variationIndex: number, changeIndex: number) => {
+    setActiveSelectorTarget({ variationIndex, changeIndex });
+    setShowVisualSelector(true);
+  };
+
+  const handleSelectorSelected = (selector: string) => {
+    if (activeSelectorTarget) {
+      updateChange(
+        activeSelectorTarget.variationIndex,
+        activeSelectorTarget.changeIndex,
+        'selector',
+        selector
+      );
+    }
+    setShowVisualSelector(false);
+    setActiveSelectorTarget(null);
   };
 
   const handleSave = () => {
@@ -174,13 +195,29 @@ export default function ExperimentBuilder({ onSave }: ExperimentBuilderProps) {
               {variation.changes.map((change, changeIndex) => (
                 <div key={changeIndex} className="change">
                   <div className="change-row">
-                    <div className="form-group" style={{ margin: 0 }}>
+                    <div className="form-group" style={{ margin: 0, position: 'relative' }}>
                       <input
                         type="text"
                         placeholder="CSS Selector (e.g., .btn-primary)"
                         value={change.selector}
                         onChange={(e) => updateChange(variationIndex, changeIndex, 'selector', e.target.value)}
                       />
+                      <button
+                        className="btn btn-secondary"
+                        style={{ 
+                          position: 'absolute', 
+                          right: '0.5rem', 
+                          top: '50%', 
+                          transform: 'translateY(-50%)',
+                          padding: '0.375rem 0.75rem',
+                          fontSize: '0.75rem',
+                          height: 'auto'
+                        }}
+                        onClick={() => openVisualSelector(variationIndex, changeIndex)}
+                        type="button"
+                      >
+                        🎯 Pick
+                      </button>
                     </div>
                     <div className="form-group" style={{ margin: 0 }}>
                       <select
@@ -232,6 +269,16 @@ export default function ExperimentBuilder({ onSave }: ExperimentBuilderProps) {
           Save Experiment
         </button>
       </div>
+
+      {showVisualSelector && (
+        <VisualSelector
+          onSelectElement={handleSelectorSelected}
+          onClose={() => {
+            setShowVisualSelector(false);
+            setActiveSelectorTarget(null);
+          }}
+        />
+      )}
     </div>
   );
 }
