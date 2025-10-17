@@ -1,16 +1,20 @@
 import { useState } from 'react';
-import { Experiment } from '../types';
+import { Experiment, Variation, DOMChange } from '../types';
 import FeatherIcon from 'feather-icons-react';
 
 interface ExperimentPreviewProps {
   experiment: Experiment;
   onUpdate: (experiment: Experiment) => Promise<void>;
+  onDuplicate: () => void;
+  onDelete: () => void;
 }
 
-export default function ExperimentPreview({ experiment, onUpdate }: ExperimentPreviewProps) {
+export default function ExperimentPreview({ experiment, onUpdate, onDuplicate, onDelete }: ExperimentPreviewProps) {
   const [copied, setCopied] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState(experiment.name);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedExperiment, setEditedExperiment] = useState<Experiment>(experiment);
 
   const handleStatusChange = async (status: 'active' | 'paused' | 'stopped') => {
     await onUpdate({ ...experiment, status });
@@ -105,6 +109,97 @@ export default function ExperimentPreview({ experiment, onUpdate }: ExperimentPr
     }
   };
 
+  const handleEditMode = () => {
+    setEditedExperiment(experiment);
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setEditedExperiment(experiment);
+    setIsEditing(false);
+  };
+
+  const handleSaveEdit = async () => {
+    await onUpdate(editedExperiment);
+    setIsEditing(false);
+  };
+
+  const addVariation = () => {
+    const newVariation: Variation = {
+      id: `var-${Date.now()}`,
+      name: `Variation ${editedExperiment.variations.length}`,
+      weight: 0,
+      changes: []
+    };
+    setEditedExperiment({
+      ...editedExperiment,
+      variations: [...editedExperiment.variations, newVariation]
+    });
+  };
+
+  const deleteVariation = (variationId: string) => {
+    if (editedExperiment.variations.length <= 1) {
+      alert('You must have at least one variation');
+      return;
+    }
+    setEditedExperiment({
+      ...editedExperiment,
+      variations: editedExperiment.variations.filter(v => v.id !== variationId)
+    });
+  };
+
+  const updateVariation = (variationId: string, field: keyof Variation, value: any) => {
+    setEditedExperiment({
+      ...editedExperiment,
+      variations: editedExperiment.variations.map(v =>
+        v.id === variationId ? { ...v, [field]: value } : v
+      )
+    });
+  };
+
+  const addChange = (variationId: string) => {
+    const newChange: DOMChange = {
+      selector: '',
+      type: 'text',
+      value: ''
+    };
+    setEditedExperiment({
+      ...editedExperiment,
+      variations: editedExperiment.variations.map(v =>
+        v.id === variationId
+          ? { ...v, changes: [...v.changes, newChange] }
+          : v
+      )
+    });
+  };
+
+  const updateChange = (variationId: string, changeIndex: number, field: keyof DOMChange, value: any) => {
+    setEditedExperiment({
+      ...editedExperiment,
+      variations: editedExperiment.variations.map(v =>
+        v.id === variationId
+          ? {
+              ...v,
+              changes: v.changes.map((c, idx) =>
+                idx === changeIndex ? { ...c, [field]: value } : c
+              )
+            }
+          : v
+      )
+    });
+  };
+
+  const deleteChange = (variationId: string, changeIndex: number) => {
+    setEditedExperiment({
+      ...editedExperiment,
+      variations: editedExperiment.variations.map(v =>
+        v.id === variationId
+          ? { ...v, changes: v.changes.filter((_, idx) => idx !== changeIndex) }
+          : v
+      )
+    });
+  };
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
@@ -138,7 +233,8 @@ export default function ExperimentPreview({ experiment, onUpdate }: ExperimentPr
                   cursor: 'pointer'
                 }}
               >
-                ✓
+
+                Save
               </button>
               <button 
                 onClick={handleNameCancel}
@@ -152,7 +248,7 @@ export default function ExperimentPreview({ experiment, onUpdate }: ExperimentPr
                   cursor: 'pointer'
                 }}
               >
-                ×
+                Cancel
               </button>
             </div>
           ) : (
@@ -179,7 +275,7 @@ export default function ExperimentPreview({ experiment, onUpdate }: ExperimentPr
             </div>
           )}
         </div>
-        <div style={{ display: 'flex', gap: '0.25rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           <select
             value={experiment.status}
             onChange={(e) => handleStatusChange(e.target.value as any)}
@@ -192,6 +288,9 @@ export default function ExperimentPreview({ experiment, onUpdate }: ExperimentPr
           </select>
           <button className="btn btn-primary" onClick={openDemo}>
             Open Demo
+          </button>
+          <button className="btn btn-secondary" onClick={onDuplicate}>
+            Duplicate
           </button>
         </div>
       </div>
@@ -207,46 +306,181 @@ export default function ExperimentPreview({ experiment, onUpdate }: ExperimentPr
       </div>
 
       <div className="variations">
-        <h3>Variations ({experiment.variations.length})</h3>
-        {experiment.variations.map((variation) => (
-          <div key={variation.id} className="variation">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h4>{variation.name}</h4>
-              <span style={{ 
-                background: 'var(--bg-tertiary)', 
-                color: 'var(--text-primary)',
-                padding: '0.25rem 0.5rem', 
-                borderRadius: '4px', 
-                fontSize: '0.8rem',
-                fontWeight: 600
-              }}>
-                {variation.weight}% traffic
-              </span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h3>Variations ({isEditing ? editedExperiment.variations.length : experiment.variations.length})</h3>
+          {!isEditing ? (
+            <button className="btn btn-secondary" onClick={handleEditMode}>
+              Edit Variations
+            </button>
+          ) : (
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button className="btn btn-secondary" onClick={handleCancelEdit}>
+                Cancel
+              </button>
+              <button className="btn btn-primary" onClick={handleSaveEdit}>
+                Save Changes
+              </button>
             </div>
+          )}
+        </div>
 
-            {variation.changes.length > 0 ? (
-              <div className="changes">
-                <strong>DOM Changes:</strong>
-                {variation.changes.map((change, index) => (
-                  <div key={index} className="change">
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr', gap: '0.5rem', fontSize: '0.9rem' }}>
-                      <div><strong>Selector:</strong> {change.selector}</div>
-                      <div><strong>Type:</strong> {change.type}</div>
-                      <div><strong>Value:</strong> {change.value}</div>
-                    </div>
-                    {change.attribute && (
-                      <div style={{ marginTop: '0.25rem', fontSize: '0.8rem', color: '#666' }}>
-                        <strong>Attribute:</strong> {change.attribute}
+        {!isEditing ? (
+          /* Read-only view */
+          <>
+            {experiment.variations.map((variation) => (
+              <div key={variation.id} className="variation">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <h4>{variation.name}</h4>
+                  <span style={{ 
+                    background: 'var(--bg-tertiary)', 
+                    color: 'var(--text-primary)',
+                    padding: '0.25rem 0.5rem', 
+                    borderRadius: '4px', 
+                    fontSize: '0.8rem',
+                    fontWeight: 600
+                  }}>
+                    {variation.weight}% traffic
+                  </span>
+                </div>
+
+                {variation.changes.length > 0 ? (
+                  <div className="changes">
+                    <strong>DOM Changes:</strong>
+                    {variation.changes.map((change, index) => (
+                      <div key={index} className="change">
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr', gap: '0.5rem', fontSize: '0.9rem' }}>
+                          <div><strong>Selector:</strong> {change.selector}</div>
+                          <div><strong>Type:</strong> {change.type}</div>
+                          <div><strong>Value:</strong> {change.value}</div>
+                        </div>
+                        {change.attribute && (
+                          <div style={{ marginTop: '0.25rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                            <strong>Attribute:</strong> {change.attribute}
+                          </div>
+                        )}
                       </div>
-                    )}
+                    ))}
                   </div>
-                ))}
+                ) : (
+                  <p style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>No changes defined (control)</p>
+                )}
               </div>
-            ) : (
-              <p style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>No changes defined (control)</p>
-            )}
-          </div>
-        ))}
+            ))}
+          </>
+        ) : (
+          /* Edit mode */
+          <>
+            {editedExperiment.variations.map((variation, _variationIndex) => (
+              <div key={variation.id} className="variation" style={{ border: '2px solid var(--border-primary)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', gap: '1rem' }}>
+                  <div style={{ flex: 1 }}>
+                    <div className="form-group" style={{ marginBottom: '0.5rem' }}>
+                      <label>Variation Name</label>
+                      <input
+                        type="text"
+                        value={variation.name}
+                        onChange={(e) => updateVariation(variation.id, 'name', e.target.value)}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Traffic Weight (%)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={variation.weight}
+                        onChange={(e) => updateVariation(variation.id, 'weight', parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+                  </div>
+                  {editedExperiment.variations.length > 1 && (
+                    <button
+                      className="btn btn-secondary"
+                      onClick={() => deleteVariation(variation.id)}
+                      style={{ background: 'var(--error)', color: 'white' }}
+                    >
+                      Delete Variation
+                    </button>
+                  )}
+                </div>
+
+                <div className="changes">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <strong>Changes:</strong>
+                    <button className="btn btn-secondary btn-sm" onClick={() => addChange(variation.id)}>
+                      Add Change
+                    </button>
+                  </div>
+
+                  {variation.changes.length === 0 ? (
+                    <p style={{ color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.875rem' }}>
+                      No changes defined. Click "Add Change" to add DOM modifications.
+                    </p>
+                  ) : (
+                    variation.changes.map((change, changeIndex) => (
+                      <div key={changeIndex} className="change" style={{ background: 'var(--bg-tertiary)', padding: '1rem', marginBottom: '0.5rem', borderRadius: 'var(--radius-md)' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                          <div className="form-group" style={{ margin: 0 }}>
+                            <label>CSS Selector</label>
+                            <input
+                              type="text"
+                              value={change.selector}
+                              onChange={(e) => updateChange(variation.id, changeIndex, 'selector', e.target.value)}
+                              placeholder=".btn-primary"
+                            />
+                          </div>
+                          <div className="form-group" style={{ margin: 0 }}>
+                            <label>Type</label>
+                            <select
+                              value={change.type}
+                              onChange={(e) => updateChange(variation.id, changeIndex, 'type', e.target.value)}
+                            >
+                              <option value="text">Text Content</option>
+                              <option value="html">HTML</option>
+                              <option value="style">Style</option>
+                              <option value="attribute">Attribute</option>
+                              <option value="class">CSS Class</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div className="form-group" style={{ margin: 0 }}>
+                          <label>Value</label>
+                          <input
+                            type="text"
+                            value={change.value}
+                            onChange={(e) => updateChange(variation.id, changeIndex, 'value', e.target.value)}
+                            placeholder="New value..."
+                          />
+                        </div>
+                        {change.type === 'attribute' && (
+                          <div className="form-group" style={{ marginTop: '0.5rem', marginBottom: 0 }}>
+                            <label>Attribute Name</label>
+                            <input
+                              type="text"
+                              value={change.attribute || ''}
+                              onChange={(e) => updateChange(variation.id, changeIndex, 'attribute', e.target.value)}
+                              placeholder="href, src, etc."
+                            />
+                          </div>
+                        )}
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => deleteChange(variation.id, changeIndex)}
+                          style={{ marginTop: '0.5rem', background: 'var(--error)', color: 'white' }}
+                        >
+                          Remove Change
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            ))}
+            <button className="btn btn-primary" onClick={addVariation} style={{ width: '100%', marginTop: '1rem' }}>
+              Add New Variation
+            </button>
+          </>
+        )}
       </div>
 
       <div className="preview-section">
@@ -258,7 +492,7 @@ export default function ExperimentPreview({ experiment, onUpdate }: ExperimentPr
           {generateSDKCode()}
         </div>
         <button className="copy-btn" onClick={copyToClipboard}>
-          {copied ? '✓ Copied!' : 'Copy Code'}
+          {copied ? 'Copied!' : 'Copy Code'}
         </button>
       </div>
 
@@ -273,6 +507,24 @@ export default function ExperimentPreview({ experiment, onUpdate }: ExperimentPr
         <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: '#666' }}>
           The demo page will show your experiment in action. Refresh to see different variations.
         </p>
+      </div>
+
+      <div className="preview-section" style={{ borderTop: '2px solid var(--border-primary)', paddingTop: '2rem', marginTop: '3rem' }}>
+        <h3 style={{ color: 'var(--error)', marginBottom: '1rem' }}>Danger Zone</h3>
+        <p style={{ marginBottom: '1rem', color: 'var(--text-secondary)', fontSize: '0.9375rem' }}>
+          Once you delete this experiment, there is no going back. Please be certain.
+        </p>
+        <button 
+          className="btn btn-secondary" 
+          onClick={() => {
+            if (window.confirm('Are you sure you want to delete this experiment? This action cannot be undone.')) {
+              onDelete();
+            }
+          }}
+          style={{ background: 'var(--error)', color: 'white', borderColor: 'var(--error)' }}
+        >
+          Delete Experiment
+        </button>
       </div>
     </div>
   );
