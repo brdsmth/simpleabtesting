@@ -23,6 +23,7 @@
   max-height: 90vh;
   overflow-y: auto;
   animation: modalSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  scrollbar-width: none;
 }
 
 .comparison-header {
@@ -44,9 +45,38 @@
 }
 
 .comparison-subtitle {
-  margin: 0;
+  margin: 0 0 0.75rem 0;
   font-size: 0.9375rem;
   color: var(--text-secondary);
+}
+
+.impact-summary {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+}
+
+.impact-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.impact-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.impact-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--brand-green);
 }
 
 .comparison-grid {
@@ -273,9 +303,16 @@
   color: var(--text-tertiary);
 }
 
+.change-value {
+  color: var(--text-primary);
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-weight: 600;
+}
+
 .change-attribute {
   color: var(--text-secondary);
-  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 0.75rem;
+  margin-left: 0.5rem;
 }
 
 .make-permanent-btn {

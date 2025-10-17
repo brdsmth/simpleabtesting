@@ -5,6 +5,8 @@ export interface Experiment {
   status: 'active' | 'paused' | 'stopped';
   variations: Variation[];
   trafficAllocation: number; // 0-100
+  winningVariation?: string; // ID of the winning variation
+  stoppedAt?: string;
 }
 
 export interface Variation {

@@ -36,6 +36,20 @@ interface Event {
   receivedAt: number;
 }
 
+interface WinnerResult {
+  variationId: string;
+  improvement: number;
+  isSignificant: boolean;
+  confidence: number;
+  controlRate: number;
+  variationRate: number;
+  effectSizeCategory?: 'small' | 'medium' | 'large';
+  needsMoreData?: boolean;
+  reason?: 'views' | 'conversions';
+  zScore?: number;
+  effectSize?: number;
+}
+
 export default function Analytics() {
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [recentEvents, setRecentEvents] = useState<Event[]>([]);
@@ -107,28 +121,61 @@ export default function Analytics() {
     return ((variationRate - controlRate) / controlRate) * 100;
   };
 
-  // Simple statistical significance calculation (Z-test for proportions)
-  const calculateSignificance = (views1: number, conversions1: number, views2: number, conversions2: number) => {
-    if (views1 < 100 || views2 < 100) return { isSignificant: false, confidence: 0 };
+  interface SignificanceResult {
+    isSignificant: boolean;
+    confidence: number;
+    needsMoreData?: boolean;
+    reason?: 'views' | 'conversions';
+    zScore?: number;
+    effectSize?: number;
+    effectSizeCategory?: 'small' | 'medium' | 'large';
+  }
+
+  // Statistical significance calculation (Z-test for proportions)
+  const calculateSignificance = (views1: number, conversions1: number, views2: number, conversions2: number): SignificanceResult => {
+    // Minimum requirements:
+    // 1. At least 30 views per variation (minimum for normal approximation)
+    // 2. At least 5 conversions per variation (minimum for Chi-square validity)
+    if (views1 < 30 || views2 < 30 || conversions1 < 5 || conversions2 < 5) {
+      return { 
+        isSignificant: false, 
+        confidence: 0,
+        needsMoreData: true,
+        reason: views1 < 30 || views2 < 30 ? 'views' : 'conversions'
+      };
+    }
     
     const p1 = conversions1 / views1;
     const p2 = conversions2 / views2;
     const pPooled = (conversions1 + conversions2) / (views1 + views2);
     
+    // Standard error calculation
     const se = Math.sqrt(pPooled * (1 - pPooled) * (1/views1 + 1/views2));
     const zScore = Math.abs((p1 - p2) / se);
     
-    // Simple confidence level based on Z-score
-    let confidence = 0;
-    if (zScore >= 1.96) confidence = 95;  // 95% confidence
-    else if (zScore >= 1.645) confidence = 90;  // 90% confidence
-    else if (zScore >= 1.28) confidence = 80;  // 80% confidence
+    // Effect size calculation (Cohen's h for proportions)
+    const effectSize = 2 * Math.asin(Math.sqrt(p1)) - 2 * Math.asin(Math.sqrt(p2));
     
-    return {
+    // Confidence levels based on Z-score
+    let confidence = 0;
+    if (zScore >= 1.96) confidence = 95;      // 95% confidence
+    else if (zScore >= 1.645) confidence = 90; // 90% confidence
+    else if (zScore >= 1.28) confidence = 80;  // 80% confidence
+
+    const absEffectSize = Math.abs(effectSize);
+    const effectSizeCategory = absEffectSize >= 0.8 ? 'large' as const : 
+                             absEffectSize >= 0.5 ? 'medium' as const : 
+                             'small' as const;
+    
+    const result: SignificanceResult = {
       isSignificant: zScore >= 1.96,
       confidence,
-      zScore
+      zScore,
+      needsMoreData: false,
+      effectSize: absEffectSize,
+      effectSizeCategory
     };
+    return result;
   };
 
   const getExperimentName = (experimentId: string): string => {
@@ -144,7 +191,7 @@ export default function Analytics() {
     return variation?.name || variationId;
   };
 
-  const getWinnerForExperiment = (experimentId: string) => {
+  const getWinnerForExperiment = (experimentId: string): WinnerResult | null => {
     const expData = analyticsData?.summary.experiments[experimentId];
     if (!expData) return null;
 
@@ -161,7 +208,7 @@ export default function Analytics() {
     // Find best performing variation
     let bestVariation = null;
     let bestImprovement = 0;
-    let bestSignificance = { isSignificant: false, confidence: 0 };
+    let bestSignificanceData: SignificanceResult | null = null;
 
     for (const [varId, varData] of variations) {
       if (varId === 'control') continue;
@@ -178,18 +225,25 @@ export default function Analytics() {
       if (improvement > bestImprovement) {
         bestImprovement = improvement;
         bestVariation = { id: varId, data: varData, rate: varRate };
-        bestSignificance = significance;
+        bestSignificanceData = significance;
       }
     }
 
-    if (bestVariation && bestImprovement > 0) {
-      return {
+    if (bestVariation && bestImprovement > 0 && bestSignificanceData) {
+      const result: WinnerResult = {
         variationId: bestVariation.id,
         improvement: bestImprovement,
-        ...bestSignificance,
+        isSignificant: bestSignificanceData.isSignificant,
+        confidence: bestSignificanceData.confidence,
+        effectSizeCategory: bestSignificanceData.effectSizeCategory,
+        needsMoreData: bestSignificanceData.needsMoreData,
+        reason: bestSignificanceData.reason,
+        zScore: bestSignificanceData.zScore,
+        effectSize: bestSignificanceData.effectSize,
         controlRate,
         variationRate: bestVariation.rate
       };
+      return result;
     }
 
     return null;
@@ -264,7 +318,9 @@ export default function Analytics() {
         <div style={{ marginBottom: '2rem' }}>
           <h3>Experiment Results</h3>
           <div style={{ display: 'grid', gap: '1rem', marginBottom: '2rem' }}>
-            {Object.entries(analyticsData.summary.experiments).map(([experimentId, _data]) => {
+            {Object.entries(analyticsData.summary.experiments)
+              .filter(([experimentId]) => experiments.some(exp => exp.id === experimentId)) // Only show existing experiments
+              .map(([experimentId, _data]) => {
               const winner = getWinnerForExperiment(experimentId);
               
               return (
@@ -312,7 +368,51 @@ export default function Analytics() {
                   ) : (
                     <div className="winner-content">
                       <p style={{ color: 'var(--text-secondary)', margin: 0 }}>
-                        Collecting data... No clear winner yet.
+                        {(() => {
+                          // Get experiment status
+                          const experiment = experiments.find(exp => exp.id === experimentId);
+                          const isStopped = experiment?.status === 'stopped';
+
+                          if (isStopped) {
+                            if (winner?.effectSizeCategory) {
+                              return <>Final results show a {winner.effectSizeCategory} effect {winner.confidence > 0 ? `with ${winner.confidence}% confidence` : 'but needs more data for confidence'}.</>;
+                            } else {
+                              return <>Experiment stopped. No significant difference detected between variations.</>;
+                            }
+                          }
+
+                          // For active/paused experiments
+                          if (_data.views < 30) {
+                            return <>Need at least 30 views per variation for initial analysis. Currently: {_data.views} views.</>;
+                          } else if (_data.conversions < 5) {
+                            return <>Need at least 5 conversions per variation. Currently: {_data.conversions} conversions from {_data.views} views.</>;
+                          } else {
+                            // Calculate the difference between variations
+                            type VariationData = { views: number; conversions: number };
+                            const variations = Object.entries(_data.variations) as [string, VariationData][];
+                            const controlVariation = variations.find(([id]) => id === 'control');
+                            const testVariation = variations.find(([id]) => id !== 'control');
+                            
+                            if (controlVariation && testVariation) {
+                              const [, controlData] = controlVariation;
+                              const [, testData] = testVariation;
+                              
+                              const controlRate = calculateConversionRateValue(controlData.views, controlData.conversions);
+                              const testRate = calculateConversionRateValue(testData.views, testData.conversions);
+                              const improvement = calculateImprovement(controlRate, testRate);
+                              
+                              if (Math.abs(improvement) > 10) { // If difference is more than 10%
+                                return <>
+                                  {improvement > 0 ? 'Positive' : 'Negative'} trend detected 
+                                  ({Math.abs(improvement).toFixed(1)}% {improvement > 0 ? 'better' : 'worse'} than control). 
+                                  Need more data for statistical significance.
+                                </>;
+                              }
+                            }
+                            
+                            return <>No clear trend detected yet. Continuing to collect data.</>;
+                          }
+                        })()}
                       </p>
                     </div>
                   )}
@@ -326,7 +426,7 @@ export default function Analytics() {
       {/* Experiments Performance Table */}
       <div style={{ marginBottom: '2rem' }}>
         <h3>Detailed Performance</h3>
-        {Object.keys(analyticsData.summary.experiments).length === 0 ? (
+        {Object.keys(analyticsData.summary.experiments).filter(id => experiments.some(exp => exp.id === id)).length === 0 ? (
           <div className="empty-state">
             <p style={{ color: 'var(--text-secondary)', fontStyle: 'italic', margin: 0, fontSize: '1.125rem', fontWeight: 600 }}>
               No experiment data available
@@ -346,7 +446,9 @@ export default function Analytics() {
               <div>Performance</div>
             </div>
             <div className="experiments-list">
-              {Object.entries(analyticsData.summary.experiments).map(([experimentId, data]) => {
+              {Object.entries(analyticsData.summary.experiments)
+                .filter(([experimentId]) => experiments.some(exp => exp.id === experimentId))
+                .map(([experimentId, data]) => {
                 const variations = Object.entries(data.variations);
                 const controlData = variations.find(([id]) => id === 'control')?.[1];
                 const controlRate = controlData ? calculateConversionRateValue(controlData.views, controlData.conversions) : 0;
@@ -428,7 +530,9 @@ export default function Analytics() {
               <div>Visitor ID</div>
             </div>
             <div className="events-list">
-              {recentEvents.map((event) => (
+              {recentEvents
+              .filter(event => experiments.some(exp => exp.id === event.experimentId))
+              .map(event => (
                 <div key={event.id} className="event-item">
                   <div className="event-col-type">
                     <span className={`event-type-badge event-type-${event.eventType}`}>{event.eventType}</span>

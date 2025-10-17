@@ -50,6 +50,20 @@ export default function ComparisonView({ experiment, onClose, onMakePermanent }:
           <div>
             <h2>Compare Variations</h2>
             <p className="comparison-subtitle">{experiment.name}</p>
+            
+            {/* Projected Impact Section */}
+            {winner && winner.variation.id !== 'control' && (
+              <div className="impact-summary">
+                <div className="impact-stat">
+                  <span className="impact-label">Expected Improvement</span>
+                  <span className="impact-value">+{calculateImprovement(winner.stats.conversionRate).toFixed(1)}%</span>
+                </div>
+                <div className="impact-stat">
+                  <span className="impact-label">Additional Conversions / 1k visits</span>
+                  <span className="impact-value">+{Math.round((winner.stats.conversionRate - (controlStats?.conversionRate || 0)) * 10)}</span>
+                </div>
+              </div>
+            )}
           </div>
           <button className="close-btn" onClick={onClose}>×</button>
         </div>
@@ -118,7 +132,10 @@ export default function ComparisonView({ experiment, onClose, onMakePermanent }:
                         <li key={idx} className="change-item">
                           <span className="change-selector">{change.selector}</span>
                           <span className="change-arrow">→</span>
-                          <span className="change-attribute">{change.attribute}</span>
+                          <span className="change-value">{change.value}</span>
+                          {change.attribute && (
+                            <span className="change-attribute">({change.attribute})</span>
+                          )}
                         </li>
                       ))}
                     </ul>
@@ -138,30 +155,6 @@ export default function ComparisonView({ experiment, onClose, onMakePermanent }:
           })}
         </div>
 
-        <div className="comparison-footer">
-          <div className="impact-calculator">
-            <h4>Projected Impact</h4>
-            {winner && winner.variation.id !== 'control' && (
-              <div className="impact-content">
-                <p>
-                  If you make <strong>{winner.variation.name}</strong> permanent:
-                </p>
-                <ul className="impact-list">
-                  <li>
-                    Expected conversion rate improvement: <strong className="impact-highlight">
-                      +{calculateImprovement(winner.stats.conversionRate).toFixed(1)}%
-                    </strong>
-                  </li>
-                  <li>
-                    Projected additional conversions per 1000 visitors: <strong className="impact-highlight">
-                      +{Math.round((winner.stats.conversionRate - (controlStats?.conversionRate || 0)) * 10)}
-                    </strong>
-                  </li>
-                </ul>
-              </div>
-            )}
-          </div>
-        </div>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Experiment, Variation, DOMChange } from '../types';
 import FeatherIcon from 'feather-icons-react';
+import ComparisonView from './ComparisonView';
 
 interface ExperimentPreviewProps {
   experiment: Experiment;
@@ -15,6 +16,7 @@ export default function ExperimentPreview({ experiment, onUpdate, onDuplicate, o
   const [editedName, setEditedName] = useState(experiment.name);
   const [isEditing, setIsEditing] = useState(false);
   const [editedExperiment, setEditedExperiment] = useState<Experiment>(experiment);
+  const [showComparison, setShowComparison] = useState(false);
 
   const handleStatusChange = async (status: 'active' | 'paused' | 'stopped') => {
     await onUpdate({ ...experiment, status });
@@ -308,20 +310,27 @@ export default function ExperimentPreview({ experiment, onUpdate, onDuplicate, o
       <div className="variations">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <h3>Variations ({isEditing ? editedExperiment.variations.length : experiment.variations.length})</h3>
-          {!isEditing ? (
-            <button className="btn btn-secondary" onClick={handleEditMode}>
-              Edit Variations
-            </button>
-          ) : (
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button className="btn btn-secondary" onClick={handleCancelEdit}>
-                Cancel
-              </button>
-              <button className="btn btn-primary" onClick={handleSaveEdit}>
-                Save Changes
-              </button>
-            </div>
-          )}
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            {!isEditing ? (
+              <>
+                <button className="btn btn-secondary" onClick={() => setShowComparison(true)}>
+                  Compare Variations
+                </button>
+                <button className="btn btn-secondary" onClick={handleEditMode}>
+                  Edit Variations
+                </button>
+              </>
+            ) : (
+              <>
+                <button className="btn btn-secondary" onClick={handleCancelEdit}>
+                  Cancel
+                </button>
+                <button className="btn btn-primary" onClick={handleSaveEdit}>
+                  Save Changes
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
         {!isEditing ? (
@@ -526,6 +535,31 @@ export default function ExperimentPreview({ experiment, onUpdate, onDuplicate, o
           Delete Experiment
         </button>
       </div>
+
+      {/* Comparison View Modal */}
+      {showComparison && (
+        <ComparisonView
+          experiment={isEditing ? editedExperiment : experiment}
+          onClose={() => setShowComparison(false)}
+          onMakePermanent={async () => {
+            // Find the winning variation
+            const variations = isEditing ? editedExperiment.variations : experiment.variations;
+            const winner = variations.find(v => v.id !== 'control');
+            
+            if (winner) {
+              // Update the experiment to mark it as stopped and note the winner
+              await onUpdate({
+                ...experiment,
+                status: 'stopped',
+                winningVariation: winner.id,
+                stoppedAt: new Date().toISOString()
+              } as Experiment);
+              
+              setShowComparison(false);
+            }
+          }}
+        />
+      )}
     </div>
   );
 }
