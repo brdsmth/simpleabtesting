@@ -100,13 +100,16 @@ class SimpleABTesting {
         debugLog(`Existing assignment: ${variationId} for ${experiment.name}`);
       }
 
-      // Apply variation changes
+      // Apply variation changes and track view
       const variation = experiment.variations.find(v => v.id === variationId);
-      if (variation && variation.changes.length > 0) {
-        DOMManipulator.applyChanges(variation.changes);
-        
-        // Track the view
+      if (variation) {
+        // Track the view first
         this.track(experiment.id, 'view');
+        
+        // Then apply any changes if they exist
+        if (variation.changes.length > 0) {
+          DOMManipulator.applyChanges(variation.changes);
+        }
       }
     });
   }
