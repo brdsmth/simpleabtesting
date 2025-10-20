@@ -2,12 +2,15 @@ import { SDKConfig, Experiment, TrackingEvent } from './types';
 import { getVisitorId, assignVariation, debugLog } from './utils';
 import { DOMManipulator } from './dom-manipulator';
 import { VisualSelector } from './visual-selector';
+import { DebugPanel } from './debug-panel';
 
 class SimpleABTesting {
   private config: SDKConfig = {};
   private visitorId: string = '';
   private assignments: { [experimentId: string]: string } = {};
   private visualSelector: VisualSelector | null = null;
+  private debugPanel: DebugPanel | null = null;
+  private experiments: Experiment[] = [];
 
   /**
    * Initialize the SDK
@@ -22,6 +25,10 @@ class SimpleABTesting {
     // Store debug flag globally so debugLog can access it
     if (config.debug) {
       (window as any).SimpleABTesting.debug = true;
+      
+      // Initialize debug panel
+      this.debugPanel = new DebugPanel();
+      this.debugPanel.init();
     }
     
     debugLog('Initializing SDK', { config, visitorId: this.visitorId });
@@ -76,6 +83,8 @@ class SimpleABTesting {
    * Process and apply experiments
    */
   private processExperiments(experiments: Experiment[]): void {
+    this.experiments = experiments;
+    
     experiments.forEach(experiment => {
       if (experiment.status !== 'active') {
         debugLog(`Skipping inactive experiment: ${experiment.name}`);
@@ -103,6 +112,11 @@ class SimpleABTesting {
       // Apply variation changes and track view
       const variation = experiment.variations.find(v => v.id === variationId);
       if (variation) {
+        // Add to debug panel if enabled
+        if (this.debugPanel) {
+          this.debugPanel.addExperiment(experiment, variationId);
+        }
+        
         // Track the view first
         this.track(experiment.id, 'view');
         
