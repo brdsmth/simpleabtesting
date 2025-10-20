@@ -3,7 +3,7 @@ import { Experiment, Variation, DOMChange } from '../types';
 import VisualSelector from './VisualSelector';
 
 interface ExperimentBuilderProps {
-  onSave: (experiment: Experiment) => void;
+  onSave: (experiment: Experiment) => void | Promise<void>;
 }
 
 export default function ExperimentBuilder({ onSave }: ExperimentBuilderProps) {

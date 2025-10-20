@@ -121,8 +121,47 @@ export default function ExperimentPreview({ experiment, onUpdate, onDuplicate, o
     setIsEditing(false);
   };
 
+  const normalizeWeights = (variations: Variation[]): Variation[] => {
+    const totalWeight = variations.reduce((sum, v) => sum + (v.weight || 0), 0);
+    
+    if (totalWeight === 0) {
+      // If all weights are 0, distribute evenly
+      const evenWeight = Math.floor(100 / variations.length);
+      const remainder = 100 - (evenWeight * variations.length);
+      return variations.map((v, index) => ({
+        ...v,
+        weight: index === 0 ? evenWeight + remainder : evenWeight
+      }));
+    }
+    
+    if (totalWeight === 100) {
+      return variations; // Already correct
+    }
+    
+    // Normalize proportionally
+    const normalized = variations.map(v => ({
+      ...v,
+      weight: Math.floor((v.weight / totalWeight) * 100)
+    }));
+    
+    // Adjust for rounding errors - add remainder to first variation
+    const newTotal = normalized.reduce((sum, v) => sum + v.weight, 0);
+    const diff = 100 - newTotal;
+    if (diff !== 0 && normalized.length > 0) {
+      normalized[0].weight += diff;
+    }
+    
+    return normalized;
+  };
+
   const handleSaveEdit = async () => {
-    await onUpdate(editedExperiment);
+    // Auto-normalize weights to total 100%
+    const normalizedExperiment = {
+      ...editedExperiment,
+      variations: normalizeWeights(editedExperiment.variations)
+    };
+    
+    await onUpdate(normalizedExperiment);
     setIsEditing(false);
   };
 
@@ -133,9 +172,20 @@ export default function ExperimentPreview({ experiment, onUpdate, onDuplicate, o
       weight: 0,
       changes: []
     };
+    
+    // Auto-distribute weights evenly when adding a new variation
+    const updatedVariations = [...editedExperiment.variations, newVariation];
+    const evenWeight = Math.floor(100 / updatedVariations.length);
+    const remainder = 100 - (evenWeight * updatedVariations.length);
+    
+    const distributedVariations = updatedVariations.map((v, index) => ({
+      ...v,
+      weight: index === 0 ? evenWeight + remainder : evenWeight
+    }));
+    
     setEditedExperiment({
       ...editedExperiment,
-      variations: [...editedExperiment.variations, newVariation]
+      variations: distributedVariations
     });
   };
 
@@ -144,19 +194,65 @@ export default function ExperimentPreview({ experiment, onUpdate, onDuplicate, o
       alert('You must have at least one variation');
       return;
     }
+    
+    // Remove the variation and redistribute weights
+    const remainingVariations = editedExperiment.variations.filter(v => v.id !== variationId);
+    const normalizedVariations = normalizeWeights(remainingVariations);
+    
     setEditedExperiment({
       ...editedExperiment,
-      variations: editedExperiment.variations.filter(v => v.id !== variationId)
+      variations: normalizedVariations
     });
   };
 
   const updateVariation = (variationId: string, field: keyof Variation, value: any) => {
-    setEditedExperiment({
-      ...editedExperiment,
-      variations: editedExperiment.variations.map(v =>
-        v.id === variationId ? { ...v, [field]: value } : v
-      )
-    });
+    if (field === 'weight') {
+      // Auto-adjust other variations when weight changes
+      const newWeight = Math.max(0, Math.min(100, parseInt(value) || 0));
+      const variations = editedExperiment.variations;
+      const currentIndex = variations.findIndex(v => v.id === variationId);
+      
+      if (currentIndex === -1) return;
+      
+      const oldWeight = variations[currentIndex].weight;
+      const weightDiff = newWeight - oldWeight;
+      
+      // Calculate how much to adjust other variations
+      const otherVariations = variations.filter((_, i) => i !== currentIndex);
+      const totalOtherWeight = otherVariations.reduce((sum, v) => sum + v.weight, 0);
+      
+      const updatedVariations = variations.map((v, i) => {
+        if (i === currentIndex) {
+          return { ...v, weight: newWeight };
+        }
+        
+        if (otherVariations.length === 0) {
+          return v;
+        }
+        
+        // Distribute the difference proportionally among other variations
+        const proportion = totalOtherWeight > 0 ? v.weight / totalOtherWeight : 1 / otherVariations.length;
+        const adjustment = Math.round(-weightDiff * proportion);
+        const newOtherWeight = Math.max(0, v.weight + adjustment);
+        
+        return { ...v, weight: newOtherWeight };
+      });
+      
+      // Normalize to ensure exactly 100%
+      const normalizedVariations = normalizeWeights(updatedVariations);
+      
+      setEditedExperiment({
+        ...editedExperiment,
+        variations: normalizedVariations
+      });
+    } else {
+      setEditedExperiment({
+        ...editedExperiment,
+        variations: editedExperiment.variations.map(v =>
+          v.id === variationId ? { ...v, [field]: value } : v
+        )
+      });
+    }
   };
 
   const addChange = (variationId: string) => {

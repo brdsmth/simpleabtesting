@@ -4,7 +4,7 @@ import { Experiment } from '../types';
 import './TemplateSelector.css';
 
 interface TemplateSelectorProps {
-  onSelectTemplate: (experiment: Experiment) => void;
+  onSelectTemplate: (experiment: Experiment) => void | Promise<void>;
   onClose: () => void;
 }
 

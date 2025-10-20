@@ -78,24 +78,70 @@ export default function ExperimentsPage({ selectedProjectId }: ExperimentsPagePr
     setToasts(prev => prev.filter(toast => toast.id !== id));
   };
 
-  const addExperiment = (experiment: Experiment) => {
+  const addExperiment = async (experiment: Experiment) => {
     // Add project_id if one is selected
     if (selectedProjectId) {
       experiment.project_id = selectedProjectId;
     }
-    setExperiments(prev => [...prev, experiment]);
-    showToast('Experiment created successfully!', 'success');
+    
+    // Save to API first
+    try {
+      const response = await fetch('http://localhost:3000/experiments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          apiKey: API_KEY,
+          experiment: experiment
+        })
+      });
+
+      if (response.ok) {
+        setExperiments(prev => [...prev, experiment]);
+        showToast('Experiment created successfully!', 'success');
+      } else {
+        console.error('Failed to save new experiment');
+        showToast('Failed to create experiment', 'error');
+      }
+    } catch (error) {
+      console.error('Error creating experiment:', error);
+      showToast('Failed to create experiment', 'error');
+    }
   };
 
-  const handleTemplateSelected = (experiment: Experiment) => {
+  const handleTemplateSelected = async (experiment: Experiment) => {
     // Add project_id if one is selected
     if (selectedProjectId) {
       experiment.project_id = selectedProjectId;
     }
-    setExperiments(prev => [...prev, experiment]);
-    setSelectedExperiment(experiment);
-    setShowTemplateSelector(false);
-    showToast('Experiment created from template!', 'success');
+    
+    // Save to API first
+    try {
+      const response = await fetch('http://localhost:3000/experiments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          apiKey: API_KEY,
+          experiment: experiment
+        })
+      });
+
+      if (response.ok) {
+        setExperiments(prev => [...prev, experiment]);
+        setSelectedExperiment(experiment);
+        setShowTemplateSelector(false);
+        showToast('Experiment created from template!', 'success');
+      } else {
+        console.error('Failed to save experiment from template');
+        showToast('Failed to create experiment from template', 'error');
+      }
+    } catch (error) {
+      console.error('Error creating experiment from template:', error);
+      showToast('Failed to create experiment from template', 'error');
+    }
   };
 
   const updateExperiment = async (updatedExperiment: Experiment) => {
