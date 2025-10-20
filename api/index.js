@@ -9,6 +9,7 @@ import experimentsRouter from './routes/experiments.js';
 import demoRouter from './routes/demo.js';
 import sdkRouter from './routes/sdk.js';
 import analyticsRouter from './routes/analytics.js';
+import projectsRouter from './routes/projects.js';
 
 const app = express();
 const port = 3000;
@@ -18,6 +19,7 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
+app.use('/projects', projectsRouter);
 app.use('/experiments', experimentsRouter);
 app.use('/demo', demoRouter);
 app.use('/analytics', analyticsRouter);
@@ -27,10 +29,16 @@ app.use('/', sdkRouter);
 app.get('/', (req, res) => {
   res.json({
     message: "Welcome to the Simple A/B Testing API",
-    version: "1.0.0",
+    version: "1.1.0",
     endpoints: {
+      projects: {
+        "GET /projects?apiKey={key}": "Fetch all projects by API key",
+        "GET /projects/{projectId}?apiKey={key}": "Fetch a specific project",
+        "POST /projects": "Create/update a project",
+        "DELETE /projects/{projectId}?apiKey={key}": "Delete a project"
+      },
       experiments: {
-        "GET /experiments?apiKey={key}": "Fetch experiments by API key",
+        "GET /experiments?apiKey={key}&projectId={id}": "Fetch experiments by API key (optional: filter by projectId)",
         "POST /experiments": "Save/update an experiment"
       },
       analytics: {

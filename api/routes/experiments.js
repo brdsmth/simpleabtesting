@@ -2,9 +2,10 @@ import express from 'express';
 const router = express.Router();
 import experimentsMockDatabase from '../data/experiments.js';
 
-// GET /experiments - Fetch experiments by API key
+// GET /experiments - Fetch experiments by API key (and optionally by project_id)
 router.get('/', (req, res) => {
   const apiKey = req.query.apiKey;
+  const projectId = req.query.projectId;
   
   if (!apiKey) {
     return res.status(400).json({
@@ -13,13 +14,21 @@ router.get('/', (req, res) => {
     });
   }
   
-  const experiments = experimentsMockDatabase[apiKey] || [];
+  let experiments = experimentsMockDatabase[apiKey] || [];
   
-  console.log(`[API] Fetching experiments for API key: ${apiKey}`);
+  // Filter by projectId if provided
+  if (projectId) {
+    experiments = experiments.filter(exp => exp.project_id === projectId);
+    console.log(`[API] Fetching experiments for API key: ${apiKey}, Project ID: ${projectId}`);
+  } else {
+    console.log(`[API] Fetching experiments for API key: ${apiKey}`);
+  }
+  
   console.log(`[API] Found ${experiments.length} experiments`);
   
   res.json({
     apiKey,
+    projectId: projectId || null,
     experiments,
     count: experiments.length
   });

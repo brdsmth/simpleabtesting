@@ -32,11 +32,28 @@ const initializeDatabase = async () => {
     console.log('Initializing database tables...');
     const client = await pool.connect();
     
+    // Create projects table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS projects (
+        id SERIAL PRIMARY KEY,
+        api_key VARCHAR(255) NOT NULL,
+        project_id VARCHAR(255) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        url VARCHAR(500),
+        description TEXT,
+        settings JSONB DEFAULT '{}',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(api_key, project_id)
+      )
+    `);
+    
     // Create experiments table
     await client.query(`
       CREATE TABLE IF NOT EXISTS experiments (
         id SERIAL PRIMARY KEY,
         api_key VARCHAR(255) NOT NULL,
+        project_id VARCHAR(255),
         experiment_id VARCHAR(255) NOT NULL,
         name VARCHAR(255) NOT NULL,
         description TEXT,
@@ -66,7 +83,15 @@ const initializeDatabase = async () => {
 
     // Create indexes for better performance
     await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_projects_api_key ON projects(api_key);
+    `);
+    
+    await client.query(`
       CREATE INDEX IF NOT EXISTS idx_experiments_api_key ON experiments(api_key);
+    `);
+    
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_experiments_project_id ON experiments(project_id);
     `);
     
     await client.query(`
@@ -76,6 +101,37 @@ const initializeDatabase = async () => {
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_analytics_experiment_id ON analytics_events(experiment_id);
     `);
+
+    // Create a default project if none exists for the demo API key
+    const defaultApiKey = 'demo-api-key-123';
+    const defaultProjectCheck = await client.query(
+      'SELECT * FROM projects WHERE api_key = $1 LIMIT 1',
+      [defaultApiKey]
+    );
+    
+    if (defaultProjectCheck.rows.length === 0) {
+      console.log('Creating default project...');
+      await client.query(`
+        INSERT INTO projects (api_key, project_id, name, url, description)
+        VALUES ($1, $2, $3, $4, $5)
+        ON CONFLICT (api_key, project_id) DO NOTHING
+      `, [
+        defaultApiKey,
+        'default-project',
+        'My First Project',
+        'http://localhost:8082',
+        'Default project for experiments'
+      ]);
+
+      // Update existing experiments to link to default project
+      await client.query(`
+        UPDATE experiments 
+        SET project_id = 'default-project' 
+        WHERE api_key = $1 AND project_id IS NULL
+      `, [defaultApiKey]);
+      
+      console.log('Default project created and linked to existing experiments');
+    }
 
     console.log('Database tables initialized successfully');
     client.release();
