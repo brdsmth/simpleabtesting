@@ -71,6 +71,7 @@ const initializeDatabase = async () => {
       CREATE TABLE IF NOT EXISTS analytics_events (
         id SERIAL PRIMARY KEY,
         api_key VARCHAR(255) NOT NULL,
+        project_id VARCHAR(255),
         experiment_id VARCHAR(255),
         variant VARCHAR(255),
         event_type VARCHAR(255) NOT NULL,
@@ -99,6 +100,10 @@ const initializeDatabase = async () => {
     `);
     
     await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_analytics_project_id ON analytics_events(project_id);
+    `);
+    
+    await client.query(`
       CREATE INDEX IF NOT EXISTS idx_analytics_experiment_id ON analytics_events(experiment_id);
     `);
 
@@ -123,14 +128,7 @@ const initializeDatabase = async () => {
         'Default project for experiments'
       ]);
 
-      // Update existing experiments to link to default project
-      await client.query(`
-        UPDATE experiments 
-        SET project_id = 'default-project' 
-        WHERE api_key = $1 AND project_id IS NULL
-      `, [defaultApiKey]);
-      
-      console.log('Default project created and linked to existing experiments');
+      console.log('Default project created');
     }
 
     console.log('Database tables initialized successfully');
