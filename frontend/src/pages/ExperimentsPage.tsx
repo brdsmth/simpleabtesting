@@ -13,7 +13,11 @@ interface ToastMessage {
   type: ToastType;
 }
 
-export default function ExperimentsPage() {
+interface ExperimentsPageProps {
+  selectedProjectId: string | null;
+}
+
+export default function ExperimentsPage({ selectedProjectId }: ExperimentsPageProps) {
   const [experiments, setExperiments] = useState<Experiment[]>([]);
   const [selectedExperiment, setSelectedExperiment] = useState<Experiment | null>(null);
   const [loading, setLoading] = useState(true);
@@ -23,19 +27,35 @@ export default function ExperimentsPage() {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
 
-  // Fetch experiments from API on startup
+  // Fetch experiments from API on startup and when project changes
   useEffect(() => {
     const fetchExperiments = async () => {
       try {
-        const response = await fetch(`http://localhost:3000/experiments?apiKey=${API_KEY}`);
+        setLoading(true);
+        
+        // Add a minimum loading time for better UX when switching projects
+        const minLoadingTime = new Promise(resolve => setTimeout(resolve, 300));
+        
+        let url = `http://localhost:3000/experiments?apiKey=${API_KEY}`;
+        if (selectedProjectId) {
+          url += `&projectId=${selectedProjectId}`;
+        }
+        
+        const response = await fetch(url);
         if (response.ok) {
           const data = await response.json();
           const apiExperiments = data.experiments || [];
+          
+          // Wait for minimum loading time to complete
+          await minLoadingTime;
+          
           setExperiments(apiExperiments);
           
           // Select the first experiment by default
           if (apiExperiments.length > 0) {
             setSelectedExperiment(apiExperiments[0]);
+          } else {
+            setSelectedExperiment(null);
           }
         }
       } catch (error) {
@@ -47,7 +67,7 @@ export default function ExperimentsPage() {
     };
 
     fetchExperiments();
-  }, []);
+  }, [selectedProjectId]);
 
   const showToast = (message: string, type: ToastType = 'success') => {
     const id = Date.now();
@@ -59,11 +79,19 @@ export default function ExperimentsPage() {
   };
 
   const addExperiment = (experiment: Experiment) => {
+    // Add project_id if one is selected
+    if (selectedProjectId) {
+      experiment.project_id = selectedProjectId;
+    }
     setExperiments(prev => [...prev, experiment]);
     showToast('Experiment created successfully!', 'success');
   };
 
   const handleTemplateSelected = (experiment: Experiment) => {
+    // Add project_id if one is selected
+    if (selectedProjectId) {
+      experiment.project_id = selectedProjectId;
+    }
     setExperiments(prev => [...prev, experiment]);
     setSelectedExperiment(experiment);
     setShowTemplateSelector(false);

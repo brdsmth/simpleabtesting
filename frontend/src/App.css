@@ -94,6 +94,11 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 1.5rem;
+}
+
+.header-left {
+  flex-shrink: 0;
 }
 
 .header-left h1 {
@@ -110,9 +115,17 @@ body {
   font-weight: 500;
 }
 
+.header-center {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .header-nav {
   display: flex;
   gap: 0.5rem;
+  flex-shrink: 0;
 }
 
 .app-content {
@@ -1113,4 +1126,437 @@ body {
   background: var(--bg-secondary);
   border: 1px solid var(--border-primary);
   border-radius: var(--radius-lg);
+}
+
+/* Modal Base Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: modalSlideIn 0.2s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--border-primary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.modal-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.close-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-btn:hover {
+  background: var(--error-bg);
+  color: var(--error);
+}
+
+.modal-body {
+  padding: 2rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Project Selector Styles - Google Analytics Inspired */
+.project-selector-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.project-selector-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-tertiary);
+}
+
+.project-selector-wrapper {
+  position: relative;
+}
+
+.project-selector-button {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 1rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 250px;
+  text-align: left;
+}
+
+.project-selector-button:hover {
+  border-color: var(--brand-green);
+  box-shadow: 0 0 0 3px rgba(62, 207, 142, 0.08);
+}
+
+.project-selector-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.project-selector-current {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.project-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--brand-green);
+  border-radius: var(--radius-md);
+  color: white;
+  flex-shrink: 0;
+}
+
+.project-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.project-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.project-url-hint {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chevron {
+  transition: transform 0.2s ease;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.chevron.open {
+  transform: rotate(180deg);
+}
+
+/* Dropdown Overlay */
+.dropdown-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+}
+
+/* Project Dropdown */
+.project-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  right: 0;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  z-index: 1000;
+  overflow: hidden;
+  animation: dropdownSlideIn 0.2s ease-out;
+}
+
+@keyframes dropdownSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.project-dropdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid var(--border-primary);
+  background: var(--bg-secondary);
+}
+
+.project-dropdown-header span {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dropdown-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.625rem;
+  background: transparent;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dropdown-action-btn:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--brand-green);
+  color: var(--brand-green);
+}
+
+.project-dropdown-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.project-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border-left: 3px solid transparent;
+}
+
+.project-dropdown-item:hover {
+  background: var(--bg-secondary);
+}
+
+.project-dropdown-item.active {
+  background: var(--success-bg);
+  border-left-color: var(--brand-green);
+}
+
+.project-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.project-dropdown-item.active .project-item-icon {
+  background: var(--brand-green);
+  color: white;
+}
+
+.project-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.project-item-name {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.project-item-meta {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 0.125rem;
+}
+
+.check-icon {
+  color: var(--brand-green);
+  flex-shrink: 0;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: var(--border-primary);
+  margin: 0.5rem 0;
+}
+
+/* Project Manager Modal Styles */
+.project-manager-modal {
+  max-width: 800px;
+}
+
+.project-manager-modal .modal-body {
+  padding: 1.5rem;
+}
+
+.projects-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.project-card {
+  padding: 1.25rem 1.5rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.5rem;
+  transition: all 0.2s ease;
+}
+
+.project-card:hover {
+  border-color: var(--brand-green);
+  box-shadow: 0 2px 8px rgba(62, 207, 142, 0.15);
+  transform: translateY(-1px);
+}
+
+.project-info {
+  flex: 1;
+}
+
+.project-info h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.project-url {
+  font-size: 0.875rem;
+  color: var(--text-tertiary);
+  margin-bottom: 0.25rem;
+  font-family: 'Courier New', monospace;
+}
+
+.project-description {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.project-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.project-actions .btn-sm {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  white-space: nowrap;
+}
+
+.project-form {
+  padding: 1rem 0;
+}
+
+.project-form .form-group {
+  margin-bottom: 1.5rem;
+}
+
+.project-form textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-family: inherit;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  resize: vertical;
+}
+
+.project-form textarea:focus {
+  outline: none;
+  border-color: var(--brand-green);
+  box-shadow: 0 0 0 3px rgba(62, 207, 142, 0.1);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-primary);
 }

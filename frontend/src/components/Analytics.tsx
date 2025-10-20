@@ -50,25 +50,35 @@ interface WinnerResult {
   effectSize?: number;
 }
 
-export default function Analytics() {
+export default function Analytics({ projectId }: { projectId: string }) {
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [recentEvents, setRecentEvents] = useState<Event[]>([]);
   const [experiments, setExperiments] = useState<Experiment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   const apiKey = 'demo-api-key-123'; // Using demo API key for now
 
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
       
-      // Fetch experiments first to get names
-      const experimentsResponse = await fetch(`http://localhost:3000/experiments?apiKey=${apiKey}`);
+      // Add a minimum loading time for better UX when switching projects
+      const minLoadingTime = new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Fetch experiments first to get names (filtered by project if selected)
+      let experimentsUrl = `http://localhost:3000/experiments?apiKey=${apiKey}`;
+      if (projectId) {
+        experimentsUrl += `&projectId=${projectId}`;
+      }
+      
+      const experimentsResponse = await fetch(experimentsUrl);
       if (experimentsResponse.ok) {
         const experimentsData = await experimentsResponse.json();
         setExperiments(experimentsData.experiments || []);
       }
+      
+      // Wait for minimum loading time
+      await minLoadingTime;
 
       // Fetch summary data
       const summaryResponse = await fetch(`http://localhost:3000/analytics/summary?apiKey=${apiKey}`);
@@ -278,7 +288,7 @@ export default function Analytics() {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h2>Analytics Dashboard</h2>
+        <h2>Analytics Dashboard | {projectId} A</h2>
         <button 
           className={`btn btn-secondary ${loading ? 'btn-loading' : ''}`}
           onClick={fetchAnalytics} 

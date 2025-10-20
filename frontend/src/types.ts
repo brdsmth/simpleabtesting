@@ -1,7 +1,19 @@
+// Project represents a website or application
+export interface Project {
+  project_id: string;
+  name: string;
+  url?: string;
+  description?: string;
+  settings?: Record<string, any>;
+  created_at?: string;
+  updated_at?: string;
+}
+
 // Shared types with the SDK
 export interface Experiment {
   id: string;
   name: string;
+  project_id?: string; // Link to project
   status: 'active' | 'paused' | 'stopped';
   variations: Variation[];
   trafficAllocation: number; // 0-100

@@ -1,9 +1,13 @@
 import Analytics from '../components/Analytics';
 
-export default function AnalyticsPage() {
+interface AnalyticsPageProps {
+  selectedProjectId: string | null;
+}
+
+export default function AnalyticsPage({ selectedProjectId }: AnalyticsPageProps) {
   return (
     <div className="main-content" style={{ gridColumn: '1 / -1' }}>
-      <Analytics />
+      <Analytics projectId={selectedProjectId || ''} />
     </div>
   );
 }
