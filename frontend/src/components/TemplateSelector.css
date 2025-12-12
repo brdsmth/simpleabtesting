@@ -24,7 +24,13 @@
   max-height: 85vh;
   overflow-y: auto;
   animation: modalSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  scrollbar-width: none;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.template-selector::-webkit-scrollbar {
+  display: none;
 }
 
 @keyframes modalSlideIn {

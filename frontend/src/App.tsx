@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import ExperimentsPage from './pages/ExperimentsPage';
 import AnalyticsPage from './pages/AnalyticsPage';
+import VisualSelectorPage from './pages/VisualSelectorPage';
 import ProjectSelector from './components/ProjectSelector';
 import ProjectManager from './components/ProjectManager';
 import './App.css';
@@ -52,6 +53,7 @@ function Navigation({ selectedProjectId, onProjectChange, onManageProjects }: Na
 }
 
 function AppContent() {
+  const location = useLocation();
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [showProjectManager, setShowProjectManager] = useState(false);
 
@@ -60,22 +62,28 @@ function AppContent() {
     setSelectedProjectId(null);
   };
 
+  // Check if we're on the visual selector page
+  const isVisualSelectorPage = location.pathname === '/visual-selector';
+
   return (
     <div className="app">
-      <Navigation 
-        selectedProjectId={selectedProjectId}
-        onProjectChange={setSelectedProjectId}
-        onManageProjects={() => setShowProjectManager(true)}
-      />
-      <div className="app-content">
+      {!isVisualSelectorPage && (
+        <Navigation 
+          selectedProjectId={selectedProjectId}
+          onProjectChange={setSelectedProjectId}
+          onManageProjects={() => setShowProjectManager(true)}
+        />
+      )}
+      <div className="app-content" style={isVisualSelectorPage ? { height: '100vh' } : undefined}>
         <Routes>
           <Route path="/" element={<ExperimentsPage selectedProjectId={selectedProjectId} />} />
           <Route path="/experiments" element={<ExperimentsPage selectedProjectId={selectedProjectId} />} />
           <Route path="/analytics" element={<AnalyticsPage selectedProjectId={selectedProjectId} />} />
+          <Route path="/visual-selector" element={<VisualSelectorPage />} />
         </Routes>
       </div>
       
-      {showProjectManager && (
+      {!isVisualSelectorPage && showProjectManager && (
         <ProjectManager
           apiKey={API_KEY}
           onClose={() => setShowProjectManager(false)}

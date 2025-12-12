@@ -1,6 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Experiment, Variation, DOMChange } from '../types';
-import VisualSelector from './VisualSelector';
 
 interface ExperimentBuilderProps {
   onSave: (experiment: Experiment) => void | Promise<void>;
@@ -9,8 +8,8 @@ interface ExperimentBuilderProps {
 export default function ExperimentBuilder({ onSave }: ExperimentBuilderProps) {
   const [name, setName] = useState('');
   const [trafficAllocation, setTrafficAllocation] = useState(100);
-  const [showVisualSelector, setShowVisualSelector] = useState(false);
   const [activeSelectorTarget, setActiveSelectorTarget] = useState<{ variationIndex: number; changeIndex: number } | null>(null);
+  const [visualSelectorWindow, setVisualSelectorWindow] = useState<Window | null>(null);
   const [variations, setVariations] = useState<Variation[]>([
     {
       id: 'control',
@@ -25,6 +24,36 @@ export default function ExperimentBuilder({ onSave }: ExperimentBuilderProps) {
       changes: []
     }
   ]);
+
+  // Listen for messages from the visual selector tab
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      // Verify the message is from our origin
+      if (event.origin !== window.location.origin) return;
+      
+      if (event.data.type === 'VISUAL_SELECTOR_RESULT' && activeSelectorTarget) {
+        updateChange(
+          activeSelectorTarget.variationIndex,
+          activeSelectorTarget.changeIndex,
+          'selector',
+          event.data.selector
+        );
+        setActiveSelectorTarget(null);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [activeSelectorTarget]);
+
+  // Cleanup: close visual selector window on unmount
+  useEffect(() => {
+    return () => {
+      if (visualSelectorWindow && !visualSelectorWindow.closed) {
+        visualSelectorWindow.close();
+      }
+    };
+  }, [visualSelectorWindow]);
 
   const addVariation = () => {
     const newVariation: Variation = {
@@ -73,20 +102,10 @@ export default function ExperimentBuilder({ onSave }: ExperimentBuilderProps) {
 
   const openVisualSelector = (variationIndex: number, changeIndex: number) => {
     setActiveSelectorTarget({ variationIndex, changeIndex });
-    setShowVisualSelector(true);
-  };
-
-  const handleSelectorSelected = (selector: string) => {
-    if (activeSelectorTarget) {
-      updateChange(
-        activeSelectorTarget.variationIndex,
-        activeSelectorTarget.changeIndex,
-        'selector',
-        selector
-      );
-    }
-    setShowVisualSelector(false);
-    setActiveSelectorTarget(null);
+    
+    // Open visual selector in a new tab (not window)
+    const newWindow = window.open('/visual-selector', '_blank');
+    setVisualSelectorWindow(newWindow);
   };
 
   const handleSave = () => {
@@ -269,16 +288,6 @@ export default function ExperimentBuilder({ onSave }: ExperimentBuilderProps) {
           Save Experiment
         </button>
       </div>
-
-      {showVisualSelector && (
-        <VisualSelector
-          onSelectElement={handleSelectorSelected}
-          onClose={() => {
-            setShowVisualSelector(false);
-            setActiveSelectorTarget(null);
-          }}
-        />
-      )}
     </div>
   );
 }

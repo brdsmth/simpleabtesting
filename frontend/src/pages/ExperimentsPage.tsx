@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Experiment } from '../types';
-import ExperimentBuilder from '../components/ExperimentBuilder';
 import ExperimentPreview from '../components/ExperimentPreview';
 import Toast, { ToastType } from '../components/Toast';
 import TemplateSelector from '../components/TemplateSelector';
+import CreateExperimentModal from '../components/CreateExperimentModal';
 
 const API_KEY = 'demo-api-key-123'; // Consistent API key across the app
 
@@ -26,6 +26,7 @@ export default function ExperimentsPage({ selectedProjectId }: ExperimentsPagePr
   const [sortBy, setSortBy] = useState<'recent' | 'name' | 'performance'>('recent');
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   // Fetch experiments from API on startup and when project changes
   useEffect(() => {
@@ -99,6 +100,7 @@ export default function ExperimentsPage({ selectedProjectId }: ExperimentsPagePr
 
       if (response.ok) {
         setExperiments(prev => [...prev, experiment]);
+        setSelectedExperiment(experiment); // Select the newly created experiment
         showToast('Experiment created successfully!', 'success');
       } else {
         console.error('Failed to save new experiment');
@@ -341,7 +343,7 @@ export default function ExperimentsPage({ selectedProjectId }: ExperimentsPagePr
           </button>
           <button 
             className="new-experiment-btn"
-            onClick={() => setSelectedExperiment(null)}
+            onClick={() => setShowCreateModal(true)}
           >
             + New
           </button>
@@ -357,9 +359,26 @@ export default function ExperimentsPage({ selectedProjectId }: ExperimentsPagePr
             onDelete={() => deleteExperiment(selectedExperiment.id)}
           />
         ) : (
-          <ExperimentBuilder 
-            onSave={addExperiment}
-          />
+          <div className="empty-main-content">
+            <div className="empty-state-card">
+              <h2>No Experiment Selected</h2>
+              <p>Select an experiment from the sidebar or create a new one to get started.</p>
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+                <button 
+                  className="btn btn-primary"
+                  onClick={() => setShowCreateModal(true)}
+                >
+                  + Create New Experiment
+                </button>
+                <button 
+                  className="btn btn-secondary"
+                  onClick={() => setShowTemplateSelector(true)}
+                >
+                  Browse Templates
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
 
@@ -380,6 +399,13 @@ export default function ExperimentsPage({ selectedProjectId }: ExperimentsPagePr
           onClose={() => setShowTemplateSelector(false)}
         />
       )}
+
+      {/* Create Experiment Modal */}
+      <CreateExperimentModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSave={addExperiment}
+      />
     </>
   );
 }
