@@ -52,6 +52,32 @@ export default function CreateExperimentModal({ isOpen, onClose, onSave }: Creat
           setVariations(updated);
           setActiveSelectorTarget(null);
         }
+      } else if (event.data.type === 'VISUAL_SELECTOR_COMPLETE') {
+        console.log('Complete experiment received from visual selector:', event.data.experiment);
+        
+        const exp = event.data.experiment;
+        
+        // Set experiment name
+        setName(exp.name);
+        
+        // Create the DOM change object
+        const change: DOMChange = {
+          selector: exp.selector,
+          type: exp.changeType,
+          value: exp.changeValue
+        };
+        
+        if (exp.changeType === 'attribute' && exp.attributeName) {
+          (change as any).attribute = exp.attributeName;
+        }
+        
+        // Update variations with the change
+        const updated = [...variations];
+        updated[1].changes = [change]; // Add to Variation A
+        setVariations(updated);
+        
+        // Move to review step
+        setCurrentStep('review');
       }
     };
 

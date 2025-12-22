@@ -214,6 +214,17 @@
   font-size: 0.875rem;
 }
 
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
 @media (max-width: 768px) {
   .visual-selector-content {
     width: 100%;
@@ -240,5 +251,30 @@
   .selected-selector-display code {
     word-break: break-all;
   }
+
+  .selection-card {
+    min-width: 90vw !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    padding: 1.5rem !important;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+}
+
+/* Step transition animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.selection-card > div {
+  animation: fadeIn 0.3s ease-out;
 }
 

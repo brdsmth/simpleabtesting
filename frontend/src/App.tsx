@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import HomePage from './pages/HomePage';
 import ExperimentsPage from './pages/ExperimentsPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import VisualSelectorPage from './pages/VisualSelectorPage';
@@ -16,8 +17,8 @@ interface NavigationProps {
 }
 
 function Navigation({ selectedProjectId, onProjectChange, onManageProjects }: NavigationProps) {
-  const location = useLocation();
-  
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+
   return (
     <header className="app-header">
       <div className="header-content">
@@ -25,7 +26,7 @@ function Navigation({ selectedProjectId, onProjectChange, onManageProjects }: Na
           <h1>Simple A/B Testing</h1>
           <p>Build and test your experiments</p>
         </div>
-        <div className="header-center">
+        <div className="header-right desktop-only">
           <ProjectSelector
             apiKey={API_KEY}
             selectedProjectId={selectedProjectId}
@@ -33,21 +34,35 @@ function Navigation({ selectedProjectId, onProjectChange, onManageProjects }: Na
             onManageProjects={onManageProjects}
           />
         </div>
-        <div className="header-nav">
-          <Link 
-            to="/experiments" 
-            className={`tab-btn ${location.pathname === '/experiments' || location.pathname === '/' ? 'active' : ''}`}
-          >
-            Experiments
-          </Link>
-          <Link 
-            to="/analytics" 
-            className={`tab-btn ${location.pathname === '/analytics' ? 'active' : ''}`}
-          >
-            Analytics
-          </Link>
-        </div>
+        <button 
+          className="hamburger-menu mobile-only"
+          onClick={() => setShowMobileMenu(!showMobileMenu)}
+          aria-label="Toggle menu"
+        >
+          <span className={`hamburger-line ${showMobileMenu ? 'open' : ''}`}></span>
+          <span className={`hamburger-line ${showMobileMenu ? 'open' : ''}`}></span>
+          <span className={`hamburger-line ${showMobileMenu ? 'open' : ''}`}></span>
+        </button>
       </div>
+      
+      {showMobileMenu && (
+        <div className="mobile-menu">
+          <div className="mobile-menu-content">
+            <ProjectSelector
+              apiKey={API_KEY}
+              selectedProjectId={selectedProjectId}
+              onProjectChange={(projectId) => {
+                onProjectChange(projectId);
+                setShowMobileMenu(false);
+              }}
+              onManageProjects={() => {
+                onManageProjects();
+                setShowMobileMenu(false);
+              }}
+            />
+          </div>
+        </div>
+      )}
     </header>
   );
 }
@@ -76,7 +91,7 @@ function AppContent() {
       )}
       <div className="app-content" style={isVisualSelectorPage ? { height: '100vh' } : undefined}>
         <Routes>
-          <Route path="/" element={<ExperimentsPage selectedProjectId={selectedProjectId} />} />
+          <Route path="/" element={<HomePage selectedProjectId={selectedProjectId} />} />
           <Route path="/experiments" element={<ExperimentsPage selectedProjectId={selectedProjectId} />} />
           <Route path="/analytics" element={<AnalyticsPage selectedProjectId={selectedProjectId} />} />
           <Route path="/visual-selector" element={<VisualSelectorPage />} />
