@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { API_URL } from './config';
 
 declare global {
   interface Window {
@@ -7,43 +8,26 @@ declare global {
 }
 
 function App() {
-  const [sdkData, setSdkData] = useState<any>(null);
-  const [currentApiKey, setCurrentApiKey] = useState<string>('demo-api-key-123');
   const [currentExperimentId, setCurrentExperimentId] = useState<string>('exp-1758898330832');
-
-  const clearAssignments = () => {
-    localStorage.removeItem('simple_ab_assignments');
-    window.location.reload();
-  };
-
-  const clearEvents = () => {
-    localStorage.removeItem('simple_ab_events');
-    window.location.reload();
-  };
-
-  const clearVisitorId = () => {
-    window.SimpleABTesting.reset();
-    window.location.reload();
-  };
 
   useEffect(() => {
     const script = document.createElement('script');
-    script.src = 'http://localhost:3000/sdk.js';
+    script.src = `${API_URL}/sdk.js`;
     script.onload = () => {
       // Get API key from URL parameters or use default
       const urlParams = new URLSearchParams(window.location.search);
       const apiKey = urlParams.get('apiKey') || 'demo-api-key-123';
       
-      setCurrentApiKey(apiKey);
       console.log('Demo using API key:', apiKey);
       
-      // New simplified API key-based initialization
+      // Initialize SDK with debug mode enabled
       window.SimpleABTesting.init({
         apiKey: apiKey,
+        apiUrl: API_URL,
         debug: true
       }).then(() => {
         // After initialization, fetch experiments to get the correct experiment ID
-        fetch(`http://localhost:3000/experiments?apiKey=${encodeURIComponent(apiKey)}`)
+        fetch(`${API_URL}/experiments?apiKey=${encodeURIComponent(apiKey)}`)
           .then(response => response.json())
           .then(data => {
             if (data.experiments && data.experiments.length > 0) {
@@ -55,17 +39,6 @@ function App() {
             console.error('Failed to fetch experiment ID:', error);
           });
       });
-      
-      const updateData = () => {
-        setSdkData({
-          visitorId: localStorage.getItem('simple_ab_visitor_id'),
-          assignments: JSON.parse(localStorage.getItem('simple_ab_assignments') || '{}'),
-          events: window.SimpleABTesting.getEvents()
-        });
-      };
-      
-      updateData();
-      setInterval(updateData, 1000);
     };
     document.head.appendChild(script);
   }, []);
@@ -197,50 +170,6 @@ function App() {
             font-size: 14px;
           }
           
-          /* Debug Panel */
-          .debug-panel {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: white;
-            border: 2px solid #667eea;
-            border-radius: 8px;
-            padding: 15px;
-            max-width: 300px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-            z-index: 1000;
-          }
-          
-          .debug-panel h4 {
-            margin: 0 0 10px 0;
-            color: #667eea;
-            font-size: 14px;
-          }
-          
-          .debug-controls button {
-            padding: 8px 12px;
-            margin: 5px 5px 5px 0;
-            font-size: 12px;
-            border: 1px solid #ddd;
-            background: white;
-            border-radius: 4px;
-            cursor: pointer;
-          }
-          
-          .debug-controls button:hover {
-            background: #f0f0f0;
-          }
-          
-          .sdk-info {
-            font-size: 11px;
-            color: #666;
-            margin-top: 10px;
-            padding: 8px;
-            background: #f8f9fa;
-            border-radius: 4px;
-            max-height: 150px;
-            overflow-y: auto;
-          }
         `}
       </style>
 
@@ -318,42 +247,6 @@ function App() {
         </form>
       </div>
 
-      {/* Debug Panel */}
-      <div className="debug-panel">
-        <h4>A/B Testing Debug</h4>
-        
-        {/* Current Variant Display */}
-        {sdkData?.assignments?.[currentExperimentId] && (
-          <div style={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            color: 'white',
-            padding: '12px',
-            borderRadius: '6px',
-            marginBottom: '12px',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: '10px', opacity: 0.9, marginBottom: '4px' }}>ACTIVE VARIANT</div>
-            <div style={{ fontSize: '16px', fontWeight: 'bold' }}>
-              {sdkData.assignments[currentExperimentId]}
-            </div>
-          </div>
-        )}
-        
-        <div style={{ fontSize: '11px', marginBottom: '10px' }}>
-          <strong>API Key:</strong> <code style={{ fontSize: '10px' }}>{currentApiKey}</code><br/>
-          <strong>Experiment:</strong> <code style={{ fontSize: '10px' }}>{currentExperimentId}</code>
-        </div>
-        <div className="debug-controls">
-          <button onClick={clearAssignments}>Clear Assignments</button>
-          <button onClick={clearEvents}>Clear Events</button>
-          <button onClick={clearVisitorId}>Reset Visitor</button>
-        </div>
-        <div className="sdk-info">
-          <pre style={{ margin: 0, fontSize: '10px', whiteSpace: 'pre-wrap' }}>
-            {JSON.stringify(sdkData, null, 2)}
-          </pre>
-        </div>
-      </div>
     </div>
   );
 }
