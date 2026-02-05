@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import './VisualSelector.css';
+import { SDK_URL } from '../config';
 
 interface VisualSelectorProps {
   onSelectElement: (selector: string) => void;
@@ -119,7 +120,7 @@ export default function VisualSelector({ onSelectElement, onClose }: VisualSelec
 
             {sdkNotDetected && !corsError && (
               <div className="cors-error-message">
-                <h4>📦 SDK Not Detected</h4>
+                <h4>SDK Not Detected</h4>
                 <p>
                   The Simple AB Testing SDK was not found on your website. The visual selector requires the SDK to be installed.
                 </p>
@@ -133,7 +134,7 @@ export default function VisualSelector({ onSelectElement, onClose }: VisualSelec
                       marginTop: '0.5rem',
                       overflow: 'auto'
                     }}>
-{`<script src="YOUR_CDN_URL/simple-ab-testing.js"
+{`<script src="${SDK_URL}"
   data-simple-ab
   data-api-key="YOUR_API_KEY">
 </script>`}
@@ -146,14 +147,14 @@ export default function VisualSelector({ onSelectElement, onClose }: VisualSelec
                   Alternatively, you can use the bookmarklet method which doesn't require SDK installation:
                 </p>
                 <button className="btn btn-secondary" onClick={copyBookmarklet} style={{ marginTop: '0.5rem' }}>
-                  📋 Copy Bookmarklet (Alternative Method)
+                  Copy Bookmarklet (Alternative Method)
                 </button>
               </div>
             )}
 
             {corsError && (
               <div className="cors-error-message">
-                <h4>⚠️ CORS Restriction Detected</h4>
+                <h4>CORS Restriction Detected</h4>
                 <p>
                   This website cannot be loaded in an iframe due to security restrictions.
                   Use the bookmarklet method instead:
@@ -166,7 +167,7 @@ export default function VisualSelector({ onSelectElement, onClose }: VisualSelec
                   <li>Click on any element to get its selector</li>
                 </ol>
                 <button className="btn btn-secondary" onClick={copyBookmarklet}>
-                  📋 Copy Bookmarklet
+                  Copy Bookmarklet
                 </button>
               </div>
             )}

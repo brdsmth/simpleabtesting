@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import '../components/VisualSelector.css';
+import { SDK_URL } from '../config';
 
 const RECENT_URLS_KEY = 'simple_ab_recent_urls';
 const MAX_RECENT_URLS = 5;
@@ -515,7 +516,7 @@ export default function VisualSelectorPage() {
                       marginTop: '0.5rem',
                       overflow: 'auto'
                     }}>
-{`<script src="YOUR_CDN_URL/simple-ab-testing.js"
+{`<script src="${SDK_URL}"
   data-simple-ab
   data-api-key="YOUR_API_KEY">
 </script>`}

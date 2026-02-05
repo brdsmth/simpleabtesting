@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import Modal from './Modal';
-import { API_URL } from '../config';
+import { API_URL, SDK_URL } from '../config';
 import './WelcomeModal.css';
 
 interface WelcomeModalProps {
@@ -17,7 +17,7 @@ export default function WelcomeModal({ isOpen, onClose }: WelcomeModalProps) {
   data-simple-ab="true"
   data-api-key="demo-api-key-123"
   data-api-url="${API_URL}"
-  src="${API_URL}/sdk.js">
+  src="${SDK_URL}">
 </script>`;
 
   const slides = [

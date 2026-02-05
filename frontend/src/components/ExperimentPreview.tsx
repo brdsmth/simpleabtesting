@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Experiment, Variation, DOMChange } from '../types';
 import FeatherIcon from 'feather-icons-react';
 import ComparisonView from './ComparisonView';
-import { API_URL, DEMO_URL } from '../config';
+import { API_URL, DEMO_URL, SDK_URL } from '../config';
 
 interface ExperimentPreviewProps {
   experiment: Experiment;
@@ -55,15 +55,15 @@ export default function ExperimentPreview({ experiment, onUpdate, onDuplicate, o
   data-api-key="demo-api-key-123"
   data-api-url="${API_URL}"
   data-debug="true"
-  src="${API_URL}/simple-ab-testing.umd.js">
+  src="${SDK_URL}">
 </script>
 
 <!-- Or initialize programmatically -->
-<script src="${API_URL}/simple-ab-testing.umd.js"></script>
+<script src="${SDK_URL}"></script>
 <script>
   SimpleABTesting.init({
     apiKey: 'demo-api-key-123',
-    apiUrl: API_URL,
+    apiUrl: '${API_URL}',
     debug: true
   });
 </script>`;
