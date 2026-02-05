@@ -1,0 +1,10 @@
+name: simple-ab-testing
+runtime: nodejs
+description: Simple A/B Testing Infrastructure on AWS
+
+config:
+  aws:region:
+    value: us-east-1
+  simple-ab-testing:dbPassword:
+    description: Database password
+    secret: true
