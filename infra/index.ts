@@ -6,6 +6,9 @@ const environment = pulumi.getStack();
 const projectName = "simple-ab-testing";
 
 const frontendDomain = config.get("frontendDomain"); // app.simpleabtesting.com
+const demoDomain = config.get("demoDomain");         // demo.simpleabtesting.com
+const sdkDomain = config.get("sdkDomain");           // sdk.simpleabtesting.com
+const apiDomain = config.get("apiDomain");           // api.simpleabtesting.com
 const certificateArn = config.get("certificateArn");
 
 const tags = {
@@ -217,7 +220,7 @@ function createStaticSite(name: string, buildDir: string, customDomain?: string,
 
 const lander = createStaticSite("lander", "../lander/dist");
 const frontend = createStaticSite("frontend", "../frontend/dist", frontendDomain, certificateArn);
-const demo = createStaticSite("demo", "../demo/dist");
+const demo = createStaticSite("demo", "../demo/dist", demoDomain, certificateArn);
 
 // Lambda needs VPC access to connect to RDS, security group allows outbound traffic
 const lambdaSecurityGroup = new aws.ec2.SecurityGroup(`${projectName}-lambda-sg`, {
@@ -259,6 +262,11 @@ new aws.iam.RolePolicyAttachment(`${projectName}-lambda-basic-policy`, {
   policyArn: "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 });
 
+// Build SDK CDN URL from custom domain or CloudFront distribution
+const sdkCdnUrl = sdkDomain 
+  ? `https://${sdkDomain}/simple-ab-testing.umd.js`
+  : undefined;
+
 // Lambda runs our Node.js API with database connection string injected
 const apiLambda = new aws.lambda.Function(`${projectName}-api`, {
   runtime: "nodejs20.x",
@@ -270,7 +278,8 @@ const apiLambda = new aws.lambda.Function(`${projectName}-api`, {
   environment: {
     variables: {
       DATABASE_URL: pulumi.interpolate`postgresql://simple_ab_testing_user:${config.requireSecret("dbPassword")}@${dbCluster.endpoint}:5432/simple_ab_testing`,
-      NODE_ENV: "production"
+      NODE_ENV: "production",
+      ...(sdkCdnUrl && { SDK_CDN_URL: sdkCdnUrl })
     }
   },
   vpcConfig: {
@@ -322,6 +331,26 @@ new aws.lambda.Permission(`${projectName}-api-lambda-permission`, {
   sourceArn: pulumi.interpolate`${apiGateway.executionArn}/*`
 });
 
+// Custom domain for API Gateway (api.simpleabtesting.com)
+let apiDomainName: aws.apigatewayv2.DomainName | undefined;
+if (apiDomain && certificateArn) {
+  apiDomainName = new aws.apigatewayv2.DomainName(`${projectName}-api-domain`, {
+    domainName: apiDomain,
+    domainNameConfiguration: {
+      certificateArn: certificateArn,
+      endpointType: "REGIONAL",
+      securityPolicy: "TLS_1_2"
+    },
+    tags
+  });
+
+  new aws.apigatewayv2.ApiMapping(`${projectName}-api-mapping`, {
+    apiId: apiGateway.id,
+    domainName: apiDomainName.domainName,
+    stage: stage.name
+  });
+}
+
 // SDK needs to be loaded from customer websites, so CloudFront provides global CDN
 // with aggressive caching (1 day default, 1 year max) and CORS headers
 const sdkBucket = new aws.s3.Bucket(`${projectName}-sdk`, {
@@ -359,6 +388,7 @@ new aws.s3.BucketPolicy(`${projectName}-sdk-policy`, {
 const sdkCdn = new aws.cloudfront.Distribution(`${projectName}-sdk-cdn`, {
   enabled: true,
   comment: "Simple A/B Testing - SDK Distribution",
+  aliases: sdkDomain ? [sdkDomain] : undefined,
   origins: [{
     originId: sdkBucket.bucket,
     domainName: sdkBucket.bucketRegionalDomainName,
@@ -386,7 +416,11 @@ const sdkCdn = new aws.cloudfront.Distribution(`${projectName}-sdk-cdn`, {
       restrictionType: "none"
     }
   },
-  viewerCertificate: {
+  viewerCertificate: sdkDomain && certificateArn ? {
+    acmCertificateArn: certificateArn,
+    sslSupportMethod: "sni-only",
+    minimumProtocolVersion: "TLSv1.2_2021"
+  } : {
     cloudfrontDefaultCertificate: true
   },
   tags
@@ -395,9 +429,15 @@ const sdkCdn = new aws.cloudfront.Distribution(`${projectName}-sdk-cdn`, {
 export const landerUrl = lander.cdn.domainName;
 export const frontendUrl = frontendDomain || frontend.cdn.domainName;
 export const frontendCloudFrontUrl = frontend.cdn.domainName;
-export const demoUrl = demo.cdn.domainName;
-export const apiUrl = apiGateway.apiEndpoint;
-export const sdkUrl = pulumi.interpolate`https://${sdkCdn.domainName}/simple-ab-testing.umd.js`;
+export const demoUrl = demoDomain || demo.cdn.domainName;
+export const demoCloudFrontUrl = demo.cdn.domainName;
+export const apiUrl = apiDomain ? `https://${apiDomain}` : apiGateway.apiEndpoint;
+export const apiGatewayUrl = apiGateway.apiEndpoint;
+export const apiDomainTarget = apiDomainName?.domainNameConfiguration.apply(c => c.targetDomainName);
+export const sdkUrl = sdkDomain 
+  ? pulumi.interpolate`https://${sdkDomain}/simple-ab-testing.umd.js`
+  : pulumi.interpolate`https://${sdkCdn.domainName}/simple-ab-testing.umd.js`;
+export const sdkCloudFrontUrl = sdkCdn.domainName;
 export const databaseEndpoint = dbCluster.endpoint;
 export const landerBucket = lander.bucket.bucket;
 export const frontendBucket = frontend.bucket.bucket;
