@@ -93,10 +93,26 @@ To stop the services:
 docker-compose down
 ```
 
+### Production Deployment
+
+To deploy to AWS using Pulumi:
+
+```bash
+# Quick deploy
+cd api && npm run build:lambda
+cd ../infra && pulumi up
+```
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for complete deployment guide.
+
+**Architecture**: Serverless hybrid with RDS Aurora Serverless v2, Lambda, API Gateway, and CloudFront CDN.
+
 ## Documentation
 
 - [Getting Started Guide](./docs/GETTING_STARTED.md)
 - [Project Plan](./docs/PROJECT_PLAN.md)
+- [API Documentation](./api/README.md)
+- [Infrastructure Guide](./infra/README.md)
 
 ## Contributing
 

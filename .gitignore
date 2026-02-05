@@ -10,6 +10,7 @@ lerna-debug.log*
 dist/
 build/
 *.tsbuildinfo
+api-lambda-bundle/
 
 # Environment variables (SECURITY CRITICAL)
 .env
@@ -116,3 +117,7 @@ temp/
 # Local development overrides
 docker-compose.override.yml
 docker-compose.local.yml
+
+# Pulumi
+.pulumi/
+Pulumi.*.yaml
