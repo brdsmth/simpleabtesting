@@ -1,3 +1,4 @@
+import { FRONTEND_URL } from '../config'
 import './Pricing.css'
 
 const Pricing = () => {
@@ -83,7 +84,7 @@ const Pricing = () => {
               </ul>
               
               <div className="pricing-footer">
-                <a href="#" className={`btn ${plan.popular ? 'btn-primary' : 'btn-secondary'} btn-large pricing-cta`}>
+                <a href={FRONTEND_URL} className={`btn ${plan.popular ? 'btn-primary' : 'btn-secondary'} btn-large pricing-cta`}>
                   {plan.cta}
                 </a>
               </div>

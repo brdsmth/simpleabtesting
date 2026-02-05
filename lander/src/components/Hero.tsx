@@ -1,3 +1,4 @@
+import { FRONTEND_URL } from '../config'
 import './Hero.css'
 
 const Hero = () => {
@@ -14,11 +15,11 @@ const Hero = () => {
               Replace Google Optimize with a drop-in solution that's easy to use and affordable. Start testing in minutes, not hours.
             </p>
             <div className="hero-actions">
-              <a href="#" className="btn btn-primary btn-large">
+              <a href={FRONTEND_URL} className="btn btn-primary btn-large">
                 Start Free Trial
               </a>
-              <a href="#" className="btn btn-secondary btn-large">
-                Watch Demo
+              <a href="#pricing" className="btn btn-secondary btn-large">
+                View Pricing
               </a>
             </div>
             <div className="hero-stats">

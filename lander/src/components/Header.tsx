@@ -1,3 +1,4 @@
+import { FRONTEND_URL } from '../config'
 import './Header.css'
 
 const Header = () => {
@@ -20,7 +21,7 @@ const Header = () => {
           </nav>
           <div className="header-actions">
             {/* <a href="#" className="btn btn-secondary">Sign In</a> */}
-            <a href="#" className="btn btn-primary">Get Started</a>
+            <a href={FRONTEND_URL} className="btn btn-primary">Get Started</a>
           </div>
         </div>
       </div>
