@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { API_URL } from './config';
+import { API_URL, SDK_URL } from './config';
 
 declare global {
   interface Window {
@@ -12,7 +12,7 @@ function App() {
 
   useEffect(() => {
     const script = document.createElement('script');
-    script.src = `${API_URL}/sdk.js`;
+    script.src = SDK_URL;
     script.onload = () => {
       // Get API key from URL parameters or use default
       const urlParams = new URLSearchParams(window.location.search);
