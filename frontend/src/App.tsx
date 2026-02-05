@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Link } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import ExperimentsPage from './pages/ExperimentsPage';
 import AnalyticsPage from './pages/AnalyticsPage';
@@ -22,10 +22,10 @@ function Navigation({ selectedProjectId, onProjectChange, onManageProjects }: Na
   return (
     <header className="app-header">
       <div className="header-content">
-        <div className="header-left">
+        <Link to="/" className="header-left logo-link">
           <h1>Simple A/B Testing</h1>
           <p>Build and test your experiments</p>
-        </div>
+        </Link>
         <div className="header-right desktop-only">
           <ProjectSelector
             apiKey={API_KEY}

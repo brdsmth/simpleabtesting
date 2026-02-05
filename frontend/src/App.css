@@ -104,6 +104,19 @@ body {
   flex-shrink: 0;
 }
 
+.logo-link {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.logo-link:hover {
+  opacity: 0.8;
+}
+
 .header-left h1 {
   font-size: 1.5rem;
   margin-bottom: 0.25rem;
