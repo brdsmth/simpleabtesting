@@ -114,6 +114,32 @@
   cursor: not-allowed;
 }
 
+.script-container {
+  margin-top: 1.5rem;
+  width: 100%;
+  max-width: 600px;
+}
+
+.script-code {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  padding: 1rem;
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+  overflow-x: auto;
+  text-align: left;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.copy-btn {
+  margin-top: 1rem;
+  width: 100%;
+}
+
 @media (max-width: 768px) {
   .welcome-slide {
     padding: 1rem;
@@ -141,6 +167,11 @@
   .welcome-actions button {
     min-width: 100px;
     font-size: 0.875rem;
+  }
+  
+  .script-code {
+    font-size: 0.75rem;
+    padding: 0.75rem;
   }
 }
 

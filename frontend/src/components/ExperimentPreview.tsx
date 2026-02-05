@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Experiment, Variation, DOMChange } from '../types';
 import FeatherIcon from 'feather-icons-react';
 import ComparisonView from './ComparisonView';
+import { API_URL, DEMO_URL } from '../config';
 
 interface ExperimentPreviewProps {
   experiment: Experiment;
@@ -52,17 +53,17 @@ export default function ExperimentPreview({ experiment, onUpdate, onDuplicate, o
 <script 
   data-simple-ab="true"
   data-api-key="demo-api-key-123"
-  data-api-url="http://localhost:3000"
+  data-api-url="${API_URL}"
   data-debug="true"
-  src="http://localhost:3002/simple-ab-testing.umd.js">
+  src="${API_URL}/simple-ab-testing.umd.js">
 </script>
 
 <!-- Or initialize programmatically -->
-<script src="http://localhost:3002/simple-ab-testing.umd.js"></script>
+<script src="${API_URL}/simple-ab-testing.umd.js"></script>
 <script>
   SimpleABTesting.init({
     apiKey: 'demo-api-key-123',
-    apiUrl: 'http://localhost:3000',
+    apiUrl: API_URL,
     debug: true
   });
 </script>`;
@@ -84,7 +85,7 @@ export default function ExperimentPreview({ experiment, onUpdate, onDuplicate, o
       const apiKey = 'demo-api-key-123';
       
       // Store/update the experiment in the API with the demo key
-      const response = await fetch('http://localhost:3000/demo/store-experiment', {
+      const response = await fetch(`${API_URL}/demo/store-experiment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -97,17 +98,17 @@ export default function ExperimentPreview({ experiment, onUpdate, onDuplicate, o
       
       if (response.ok) {
         // Open demo with the consistent API key
-        const demoUrl = `http://localhost:8082?apiKey=${apiKey}`;
+        const demoUrl = `${DEMO_URL}?apiKey=${apiKey}`;
         window.open(demoUrl, '_blank');
       } else {
         console.error('Failed to store experiment for demo');
         // Fallback: open demo with default API key
-        window.open('http://localhost:8082', '_blank');
+        window.open(`${DEMO_URL}`, '_blank');
       }
     } catch (error) {
       console.error('Error opening demo:', error);
       // Fallback: open demo with default API key  
-      window.open('http://localhost:8082', '_blank');
+      window.open(`${DEMO_URL}`, '_blank');
     }
   };
 

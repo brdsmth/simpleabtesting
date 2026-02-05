@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Experiment, DOMChange } from '../types';
 import WelcomeModal from '../components/WelcomeModal';
 import FeatherIcon from 'feather-icons-react';
+import { API_URL } from '../config';
 import './HomePage.css';
 
 const API_KEY = 'demo-api-key-123';
@@ -11,6 +13,7 @@ interface HomePageProps {
 }
 
 export default function HomePage({ selectedProjectId }: HomePageProps) {
+  const navigate = useNavigate();
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [experiments, setExperiments] = useState<Experiment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -19,7 +22,7 @@ export default function HomePage({ selectedProjectId }: HomePageProps) {
     try {
       setLoading(true);
       
-      let url = `http://localhost:3000/experiments?apiKey=${API_KEY}`;
+      let url = `${API_URL}/experiments?apiKey=${API_KEY}`;
       if (selectedProjectId) {
         url += `&projectId=${selectedProjectId}`;
       }
@@ -97,7 +100,7 @@ export default function HomePage({ selectedProjectId }: HomePageProps) {
         
         // Save to API
         try {
-          const response = await fetch('http://localhost:3000/experiments', {
+          const response = await fetch(`${API_URL}/experiments`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -237,11 +240,17 @@ export default function HomePage({ selectedProjectId }: HomePageProps) {
               </div>
 
               <div className="experiment-card-footer">
-                <button className="btn btn-secondary btn-sm experiment-card-btn">
+                <button 
+                  className="btn btn-secondary btn-sm experiment-card-btn"
+                  onClick={() => navigate('/analytics')}
+                >
                   <FeatherIcon icon="bar-chart-2" size={14} />
                   View Analytics
                 </button>
-                <button className="btn btn-secondary btn-sm experiment-card-btn">
+                <button 
+                  className="btn btn-secondary btn-sm experiment-card-btn"
+                  onClick={() => navigate('/experiments')}
+                >
                   <FeatherIcon icon="settings" size={14} />
                   Configure
                 </button>

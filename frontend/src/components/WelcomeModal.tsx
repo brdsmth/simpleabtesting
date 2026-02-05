@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Modal from './Modal';
+import { API_URL } from '../config';
 import './WelcomeModal.css';
 
 interface WelcomeModalProps {
@@ -9,6 +10,15 @@ interface WelcomeModalProps {
 
 export default function WelcomeModal({ isOpen, onClose }: WelcomeModalProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [copied, setCopied] = useState(false);
+
+  const sdkCode = `<!-- Add this to your website's <head> section -->
+<script 
+  data-simple-ab="true"
+  data-api-key="demo-api-key-123"
+  data-api-url="${API_URL}"
+  src="${API_URL}/sdk.js">
+</script>`;
 
   const slides = [
     {
@@ -25,8 +35,24 @@ export default function WelcomeModal({ isOpen, onClose }: WelcomeModalProps) {
       title: 'Track Results in Real-Time',
       content: 'Monitor your experiments with live analytics. See which variations perform best and make data-driven decisions to improve your conversions.',
       icon: '3'
+    },
+    {
+      title: 'Add to Your Website',
+      content: 'Copy this script tag and paste it into your website\'s <head> section to start running experiments.',
+      icon: '4',
+      isScript: true
     }
   ];
+
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(sdkCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
 
   const handleNext = () => {
     if (currentSlide < slides.length - 1) {
@@ -58,6 +84,18 @@ export default function WelcomeModal({ isOpen, onClose }: WelcomeModalProps) {
           <div className="welcome-icon">{slide.icon}</div>
           <h2 className="welcome-title">{slide.title}</h2>
           <p className="welcome-content">{slide.content}</p>
+          
+          {slide.isScript && (
+            <div className="script-container">
+              <pre className="script-code">{sdkCode}</pre>
+              <button 
+                className="btn btn-secondary copy-btn"
+                onClick={copyToClipboard}
+              >
+                {copied ? 'Copied!' : 'Copy Script'}
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="welcome-progress">
@@ -80,7 +118,7 @@ export default function WelcomeModal({ isOpen, onClose }: WelcomeModalProps) {
             Previous
           </button>
           <button className="btn btn-primary" onClick={handleNext}>
-            {currentSlide === slides.length - 1 ? "Let's Go!" : 'Next'}
+            {currentSlide === slides.length - 1 ? "Create Your First Experiment" : 'Next'}
           </button>
         </div>
       </div>

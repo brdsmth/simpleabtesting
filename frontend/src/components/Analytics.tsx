@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Experiment } from '../types';
+import { API_URL } from '../config';
 
 interface AnalyticsData {
   apiKey: string;
@@ -66,7 +67,7 @@ export default function Analytics({ projectId }: { projectId: string }) {
       const minLoadingTime = new Promise(resolve => setTimeout(resolve, 300));
       
       // Fetch experiments first to get names (filtered by project if selected)
-      let experimentsUrl = `http://localhost:3000/experiments?apiKey=${apiKey}`;
+      let experimentsUrl = `${API_URL}/experiments?apiKey=${apiKey}`;
       if (projectId) {
         experimentsUrl += `&projectId=${projectId}`;
       }
@@ -81,7 +82,7 @@ export default function Analytics({ projectId }: { projectId: string }) {
       await minLoadingTime;
 
       // Fetch summary data
-      const summaryResponse = await fetch(`http://localhost:3000/analytics/summary?apiKey=${apiKey}`);
+      const summaryResponse = await fetch(`${API_URL}/analytics/summary?apiKey=${apiKey}`);
       if (!summaryResponse.ok) {
         throw new Error('Failed to fetch analytics summary');
       }
@@ -89,7 +90,7 @@ export default function Analytics({ projectId }: { projectId: string }) {
       setAnalyticsData(summaryData);
 
       // Fetch recent events
-      const eventsResponse = await fetch(`http://localhost:3000/analytics?apiKey=${apiKey}&limit=10`);
+      const eventsResponse = await fetch(`${API_URL}/analytics?apiKey=${apiKey}&limit=10`);
       if (!eventsResponse.ok) {
         throw new Error('Failed to fetch recent events');
       }

@@ -4,6 +4,7 @@ import ExperimentPreview from '../components/ExperimentPreview';
 import Toast, { ToastType } from '../components/Toast';
 import TemplateSelector from '../components/TemplateSelector';
 import CreateExperimentModal from '../components/CreateExperimentModal';
+import { API_URL } from '../config';
 
 const API_KEY = 'demo-api-key-123'; // Consistent API key across the app
 
@@ -37,7 +38,7 @@ export default function ExperimentsPage({ selectedProjectId }: ExperimentsPagePr
         // Add a minimum loading time for better UX when switching projects
         const minLoadingTime = new Promise(resolve => setTimeout(resolve, 300));
         
-        let url = `http://localhost:3000/experiments?apiKey=${API_KEY}`;
+        let url = `${API_URL}/experiments?apiKey=${API_KEY}`;
         if (selectedProjectId) {
           url += `&projectId=${selectedProjectId}`;
         }
@@ -87,7 +88,7 @@ export default function ExperimentsPage({ selectedProjectId }: ExperimentsPagePr
     
     // Save to API first
     try {
-      const response = await fetch('http://localhost:3000/experiments', {
+      const response = await fetch(`${API_URL}/experiments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -120,7 +121,7 @@ export default function ExperimentsPage({ selectedProjectId }: ExperimentsPagePr
     
     // Save to API first
     try {
-      const response = await fetch('http://localhost:3000/experiments', {
+      const response = await fetch(`${API_URL}/experiments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -149,7 +150,7 @@ export default function ExperimentsPage({ selectedProjectId }: ExperimentsPagePr
   const updateExperiment = async (updatedExperiment: Experiment) => {
     try {
       // Save to API first
-      const response = await fetch('http://localhost:3000/experiments', {
+      const response = await fetch(`${API_URL}/experiments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

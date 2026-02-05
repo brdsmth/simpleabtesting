@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Project } from '../types';
 import FeatherIcon from 'feather-icons-react';
+import { API_URL } from '../config';
 
 interface ProjectSelectorProps {
   apiKey: string;
@@ -26,7 +27,7 @@ export default function ProjectSelector({
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:3000/projects?apiKey=${apiKey}`);
+      const response = await fetch(`${API_URL}/projects?apiKey=${apiKey}`);
       if (response.ok) {
         const data = await response.json();
         setProjects(data.projects || []);
