@@ -6,7 +6,7 @@ const router = express.Router();
 // GET all projects for an API key
 router.get('/', async (req, res) => {
   try {
-    const { apiKey } = req.query;
+    const { apiKey, includeArchived } = req.query;
 
     if (!apiKey) {
       return res.status(400).json({ 
@@ -15,10 +15,14 @@ router.get('/', async (req, res) => {
       });
     }
 
+    // If includeArchived=true, show only archived projects
+    // Otherwise show only active projects
+    const archivedFilter = includeArchived === 'true' ? 'archived = TRUE' : 'archived = FALSE';
+
     const result = await pool.query(
-      `SELECT project_id, name, url, description, settings, created_at, updated_at 
+      `SELECT project_id, name, url, description, settings, archived, created_at, updated_at 
        FROM projects 
-       WHERE api_key = $1 AND archived = FALSE
+       WHERE api_key = $1 AND ${archivedFilter}
        ORDER BY created_at DESC`,
       [apiKey]
     );
@@ -128,6 +132,51 @@ router.post('/', async (req, res) => {
     console.error('Error saving project:', error);
     res.status(500).json({ 
       error: 'Failed to save project',
+      message: error.message 
+    });
+  }
+});
+
+// POST - Unarchive a project
+router.post('/:projectId/unarchive', async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const { apiKey } = req.query;
+
+    if (!apiKey) {
+      return res.status(400).json({ 
+        error: 'API key is required',
+        message: 'Please provide an apiKey query parameter'
+      });
+    }
+
+    // Check if project exists and is archived
+    const checkResult = await pool.query(
+      'SELECT * FROM projects WHERE api_key = $1 AND project_id = $2 AND archived = TRUE',
+      [apiKey, projectId]
+    );
+
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ 
+        error: 'Project not found',
+        message: `No archived project found with ID: ${projectId}`
+      });
+    }
+
+    // Unarchive the project
+    await pool.query(
+      'UPDATE projects SET archived = FALSE, updated_at = CURRENT_TIMESTAMP WHERE api_key = $1 AND project_id = $2',
+      [apiKey, projectId]
+    );
+
+    res.json({
+      success: true,
+      message: 'Project restored successfully. Note: Experiments remain archived and must be restored individually.'
+    });
+  } catch (error) {
+    console.error('Error restoring project:', error);
+    res.status(500).json({ 
+      error: 'Failed to restore project',
       message: error.message 
     });
   }
