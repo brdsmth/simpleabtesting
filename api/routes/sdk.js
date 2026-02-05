@@ -1,15 +1,12 @@
 import express from 'express';
-import path from 'path';
-import { fileURLToPath } from 'url';
 const router = express.Router();
 
-// ES modules equivalent of __dirname
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// GET /sdk.js - Serve the SDK JavaScript file
+// GET /sdk.js - Redirect to CDN (SDK is served from CloudFront in production)
 router.get('/sdk.js', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'sdk', 'dist', 'simple-ab-testing.umd.js'));
+  // In Lambda, redirect to the CloudFront CDN
+  // For local dev, this could serve from local filesystem
+  const sdkUrl = process.env.SDK_CDN_URL || 'https://d58p1yx7p03gj.cloudfront.net/simple-ab-testing.umd.js';
+  res.redirect(302, sdkUrl);
 });
 
 export default router;
