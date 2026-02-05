@@ -28,7 +28,7 @@ class SimpleABTesting {
       
       // Initialize debug panel
       this.debugPanel = new DebugPanel();
-      this.debugPanel.init();
+      this.debugPanel.init(this);
     }
     
     debugLog('Initializing SDK', { config, visitorId: this.visitorId });

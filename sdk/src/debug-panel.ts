@@ -5,13 +5,16 @@ export class DebugPanel {
   private experiments: Map<string, { experiment: Experiment; variation: string; changes: DOMChange[] }> = new Map();
   private isDragging = false;
   private dragOffset = { x: 0, y: 0 };
-  private position = { x: 20, y: 20 }; // Default to bottom-right
+  private position = { x: 20, y: 20 };
+  private sdkInstance: any = null;
   
-  init(): void {
+  init(sdkInstance?: any): void {
+    this.sdkInstance = sdkInstance;
     this.loadPosition();
     this.createPanel();
     this.attachStyles();
     this.setupDragging();
+    this.setupControls();
   }
   
   private createPanel(): void {
@@ -30,12 +33,18 @@ export class DebugPanel {
     
     this.panel.innerHTML = `
       <div class="debug-header" id="debug-header">
-        <strong style="cursor: move; user-select: none;">🧪 A/B Testing Debug Panel</strong>
+        <strong style="cursor: move; user-select: none;">A/B Testing Debug Panel</strong>
         <button class="close-btn" id="close-debug-panel">×</button>
       </div>
       <div class="debug-content" id="debug-content">
         <div class="no-experiments">No active experiments</div>
       </div>
+      <div class="debug-controls">
+        <button class="control-btn" id="clear-assignments">Clear Assignments</button>
+        <button class="control-btn" id="clear-events">Clear Events</button>
+        <button class="control-btn" id="reset-visitor">Reset Visitor</button>
+      </div>
+      <div class="sdk-data" id="sdk-data"></div>
     `;
     
     document.body.appendChild(this.panel);
@@ -220,8 +229,79 @@ export class DebugPanel {
         border-radius: 4px;
         text-align: center;
       }
+      
+      #simple-ab-debug-panel .debug-controls {
+        padding: 12px 16px;
+        background: #f8f9fa;
+        border-top: 1px solid #e9ecef;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      
+      #simple-ab-debug-panel .control-btn {
+        flex: 1;
+        min-width: 100px;
+        padding: 8px 12px;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      
+      #simple-ab-debug-panel .control-btn:hover {
+        background: #3ecf8e;
+        color: white;
+        border-color: #3ecf8e;
+        transform: translateY(-1px);
+      }
+      
+      #simple-ab-debug-panel .sdk-data {
+        padding: 12px 16px;
+        background: #f1f3f5;
+        border-top: 1px solid #e9ecef;
+        max-height: 150px;
+        overflow-y: auto;
+      }
+      
+      #simple-ab-debug-panel .sdk-data pre {
+        margin: 0;
+        font-size: 10px;
+        font-family: 'Monaco', 'Courier New', monospace;
+        color: #495057;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
     `;
     document.head.appendChild(style);
+  }
+  
+  private setupControls(): void {
+    if (!this.panel) return;
+    
+    const clearAssignments = this.panel.querySelector('#clear-assignments');
+    const clearEvents = this.panel.querySelector('#clear-events');
+    const resetVisitor = this.panel.querySelector('#reset-visitor');
+    
+    clearAssignments?.addEventListener('click', () => {
+      localStorage.removeItem('simple_ab_assignments');
+      window.location.reload();
+    });
+    
+    clearEvents?.addEventListener('click', () => {
+      localStorage.removeItem('simple_ab_events');
+      window.location.reload();
+    });
+    
+    resetVisitor?.addEventListener('click', () => {
+      if (this.sdkInstance?.reset) {
+        this.sdkInstance.reset();
+        window.location.reload();
+      }
+    });
   }
   
   addExperiment(experiment: Experiment, variationId: string): void {
@@ -241,39 +321,49 @@ export class DebugPanel {
     if (!this.panel) return;
     
     const content = this.panel.querySelector('#debug-content');
+    const sdkDataEl = this.panel.querySelector('#sdk-data');
     if (!content) return;
     
     if (this.experiments.size === 0) {
       content.innerHTML = '<div class="no-experiments">No active experiments</div>';
-      return;
+    } else {
+      let html = '';
+      
+      this.experiments.forEach((data, experimentId) => {
+        const { experiment, variation, changes } = data;
+        const variationObj = experiment.variations.find(v => v.id === variation);
+        const variationName = variationObj?.name || variation;
+        
+        html += `
+          <div class="experiment-item">
+            <div class="experiment-name">
+              ${this.escapeHtml(experiment.name)}
+            </div>
+            <div class="experiment-id">ID: ${this.escapeHtml(experimentId)}</div>
+            <div class="variation-badge">
+              ✓ ${this.escapeHtml(variationName)}
+            </div>
+            
+            <div class="changes-section">
+              <div class="changes-header">DOM Changes (${changes.length})</div>
+              ${this.renderChanges(changes)}
+            </div>
+          </div>
+        `;
+      });
+      
+      content.innerHTML = html;
     }
     
-    let html = '';
-    
-    this.experiments.forEach((data, experimentId) => {
-      const { experiment, variation, changes } = data;
-      const variationObj = experiment.variations.find(v => v.id === variation);
-      const variationName = variationObj?.name || variation;
-      
-      html += `
-        <div class="experiment-item">
-          <div class="experiment-name">
-            ${this.escapeHtml(experiment.name)}
-          </div>
-          <div class="experiment-id">ID: ${this.escapeHtml(experimentId)}</div>
-          <div class="variation-badge">
-            ✓ ${this.escapeHtml(variationName)}
-          </div>
-          
-          <div class="changes-section">
-            <div class="changes-header">DOM Changes (${changes.length})</div>
-            ${this.renderChanges(changes)}
-          </div>
-        </div>
-      `;
-    });
-    
-    content.innerHTML = html;
+    // Update SDK data
+    if (sdkDataEl) {
+      const sdkData = {
+        visitorId: localStorage.getItem('simple_ab_visitor_id'),
+        assignments: JSON.parse(localStorage.getItem('simple_ab_assignments') || '{}'),
+        events: this.sdkInstance?.getEvents?.() || []
+      };
+      sdkDataEl.innerHTML = `<pre>${JSON.stringify(sdkData, null, 2)}</pre>`;
+    }
   }
   
   private renderChanges(changes: DOMChange[]): string {
