@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Project } from '../types';
 import FeatherIcon from 'feather-icons-react';
+import { API_URL } from '../config';
 
 interface ProjectManagerProps {
   apiKey: string;
@@ -21,7 +22,7 @@ export default function ProjectManager({ apiKey, onClose, onProjectsUpdated }: P
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:3000/projects?apiKey=${apiKey}`);
+      const response = await fetch(`${API_URL}/projects?apiKey=${apiKey}`);
       if (response.ok) {
         const data = await response.json();
         setProjects(data.projects || []);
@@ -35,7 +36,7 @@ export default function ProjectManager({ apiKey, onClose, onProjectsUpdated }: P
 
   const handleSaveProject = async (project: Project) => {
     try {
-      const response = await fetch('http://localhost:3000/projects', {
+      const response = await fetch(`${API_URL}/projects`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ apiKey, project })
@@ -57,26 +58,32 @@ export default function ProjectManager({ apiKey, onClose, onProjectsUpdated }: P
     }
   };
 
-  const handleDeleteProject = async (projectId: string) => {
-    if (!window.confirm('Are you sure you want to delete this project?')) {
+  const handleArchiveProject = async (projectId: string) => {
+    if (!window.confirm('Are you sure you want to archive this project?\n\nThis will also archive all experiments in this project. Archived items won\'t be visible but will remain in the database.')) {
       return;
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/projects/${projectId}?apiKey=${apiKey}`, {
+      const response = await fetch(`${API_URL}/projects/${projectId}?apiKey=${apiKey}`, {
         method: 'DELETE'
       });
 
       if (response.ok) {
+        const data = await response.json();
         await fetchProjects();
         onProjectsUpdated();
+        
+        // Show success message with archived experiment count
+        if (data.archivedExperimentCount > 0) {
+          alert(`Project archived successfully along with ${data.archivedExperimentCount} experiment(s)`);
+        }
       } else {
         const data = await response.json();
-        alert(data.message || 'Failed to delete project');
+        alert(data.message || 'Failed to archive project');
       }
     } catch (error) {
-      console.error('Failed to delete project:', error);
-      alert('Failed to delete project');
+      console.error('Failed to archive project:', error);
+      alert('Failed to archive project');
     }
   };
 
@@ -167,11 +174,12 @@ export default function ProjectManager({ apiKey, onClose, onProjectsUpdated }: P
                         </button>
                         <button
                           className="btn btn-secondary btn-sm"
-                          onClick={() => handleDeleteProject(project.project_id)}
-                          style={{ color: 'var(--error)' }}
+                          onClick={() => handleArchiveProject(project.project_id)}
+                          style={{ color: 'var(--warning)' }}
+                          title="Archive project and all its experiments"
                         >
-                          <FeatherIcon icon="trash-2" size={14} />
-                          Delete
+                          <FeatherIcon icon="archive" size={14} />
+                          Archive
                         </button>
                       </div>
                     </div>
