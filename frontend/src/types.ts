@@ -5,6 +5,7 @@ export interface Project {
   url?: string;
   description?: string;
   settings?: Record<string, any>;
+  archived?: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -17,6 +18,7 @@ export interface Experiment {
   status: 'active' | 'paused' | 'stopped';
   variations: Variation[];
   trafficAllocation: number; // 0-100
+  archived?: boolean;
   winningVariation?: string; // ID of the winning variation
   stoppedAt?: string;
 }

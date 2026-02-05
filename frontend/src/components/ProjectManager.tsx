@@ -14,15 +14,19 @@ export default function ProjectManager({ apiKey, onClose, onProjectsUpdated }: P
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showArchived, setShowArchived] = useState(false);
 
   useEffect(() => {
     fetchProjects();
-  }, [apiKey]);
+  }, [apiKey, showArchived]);
 
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/projects?apiKey=${apiKey}`);
+      const url = showArchived 
+        ? `${API_URL}/projects?apiKey=${apiKey}&includeArchived=true`
+        : `${API_URL}/projects?apiKey=${apiKey}`;
+      const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
         setProjects(data.projects || []);
@@ -87,6 +91,30 @@ export default function ProjectManager({ apiKey, onClose, onProjectsUpdated }: P
     }
   };
 
+  const handleUnarchiveProject = async (projectId: string) => {
+    if (!window.confirm('Are you sure you want to restore this project?\n\nThis will make the project visible again, but experiments will remain archived unless restored individually.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/projects/${projectId}/unarchive?apiKey=${apiKey}`, {
+        method: 'POST'
+      });
+
+      if (response.ok) {
+        await fetchProjects();
+        onProjectsUpdated();
+        alert('Project restored successfully');
+      } else {
+        const data = await response.json();
+        alert(data.message || 'Failed to restore project');
+      }
+    } catch (error) {
+      console.error('Failed to restore project:', error);
+      alert('Failed to restore project');
+    }
+  };
+
   const startCreatingProject = () => {
     setIsCreating(true);
     setEditingProject({
@@ -137,53 +165,104 @@ export default function ProjectManager({ apiKey, onClose, onProjectsUpdated }: P
             />
           ) : (
             <>
-              <div style={{ marginBottom: '1.5rem' }}>
+              <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <button className="btn btn-primary" onClick={startCreatingProject}>
                   <FeatherIcon icon="plus" size={16} />
                   New Project
+                </button>
+                <button 
+                  className="btn btn-secondary"
+                  onClick={() => setShowArchived(!showArchived)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                >
+                  <FeatherIcon icon={showArchived ? "eye-off" : "archive"} size={16} />
+                  {showArchived ? 'Hide Archived' : 'View Archived'}
                 </button>
               </div>
 
               {projects.length === 0 ? (
                 <div className="empty-state">
-                  <p>No projects yet</p>
+                  <p>{showArchived ? 'No archived projects' : 'No projects yet'}</p>
                   <p style={{ fontSize: '0.875rem', color: 'var(--text-tertiary)', marginTop: '0.5rem' }}>
-                    Create your first project to organize your experiments
+                    {showArchived 
+                      ? 'Archived projects will appear here'
+                      : 'Create your first project to organize your experiments'
+                    }
                   </p>
                 </div>
               ) : (
                 <div className="projects-list">
-                  {projects.map((project) => (
-                    <div key={project.project_id} className="project-card">
-                      <div className="project-info">
-                        <h3>{project.name}</h3>
-                        {project.url && (
-                          <p className="project-url">{project.url}</p>
-                        )}
-                        {project.description && (
-                          <p className="project-description">{project.description}</p>
-                        )}
+                  {projects.map((project) => {
+                    const isArchived = project.archived;
+                    return (
+                      <div 
+                        key={project.project_id} 
+                        className="project-card"
+                        style={isArchived ? { 
+                          opacity: 0.7, 
+                          borderLeft: '3px solid var(--warning)',
+                          background: '#fafafa'
+                        } : {}}
+                      >
+                        <div className="project-info">
+                          <h3>
+                            {project.name}
+                            {isArchived && (
+                              <span style={{ 
+                                marginLeft: '8px', 
+                                fontSize: '0.75rem', 
+                                color: 'var(--warning)',
+                                fontWeight: 'normal',
+                                padding: '2px 8px',
+                                background: '#fff3cd',
+                                borderRadius: '4px'
+                              }}>
+                                Archived
+                              </span>
+                            )}
+                          </h3>
+                          {project.url && (
+                            <p className="project-url">{project.url}</p>
+                          )}
+                          {project.description && (
+                            <p className="project-description">{project.description}</p>
+                          )}
+                        </div>
+                        <div className="project-actions">
+                          {!isArchived && (
+                            <>
+                              <button
+                                className="btn btn-secondary btn-sm"
+                                onClick={() => setEditingProject(project)}
+                              >
+                                <FeatherIcon icon="edit" size={14} />
+                                Edit
+                              </button>
+                              <button
+                                className="btn btn-secondary btn-sm"
+                                onClick={() => handleArchiveProject(project.project_id)}
+                                style={{ color: 'var(--warning)' }}
+                                title="Archive project and all its experiments"
+                              >
+                                <FeatherIcon icon="archive" size={14} />
+                                Archive
+                              </button>
+                            </>
+                          )}
+                          {isArchived && (
+                            <button
+                              className="btn btn-primary btn-sm"
+                              onClick={() => handleUnarchiveProject(project.project_id)}
+                              title="Restore this project"
+                            >
+                              <FeatherIcon icon="rotate-ccw" size={14} />
+                              Restore
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      <div className="project-actions">
-                        <button
-                          className="btn btn-secondary btn-sm"
-                          onClick={() => setEditingProject(project)}
-                        >
-                          <FeatherIcon icon="edit" size={14} />
-                          Edit
-                        </button>
-                        <button
-                          className="btn btn-secondary btn-sm"
-                          onClick={() => handleArchiveProject(project.project_id)}
-                          style={{ color: 'var(--warning)' }}
-                          title="Archive project and all its experiments"
-                        >
-                          <FeatherIcon icon="archive" size={14} />
-                          Archive
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </>
