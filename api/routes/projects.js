@@ -18,7 +18,7 @@ router.get('/', async (req, res) => {
     const result = await pool.query(
       `SELECT project_id, name, url, description, settings, created_at, updated_at 
        FROM projects 
-       WHERE api_key = $1 
+       WHERE api_key = $1 AND archived = FALSE
        ORDER BY created_at DESC`,
       [apiKey]
     );
@@ -52,7 +52,7 @@ router.get('/:projectId', async (req, res) => {
     const result = await pool.query(
       `SELECT project_id, name, url, description, settings, created_at, updated_at 
        FROM projects 
-       WHERE api_key = $1 AND project_id = $2`,
+       WHERE api_key = $1 AND project_id = $2 AND archived = FALSE`,
       [apiKey, projectId]
     );
 
@@ -133,7 +133,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-// DELETE a project
+// DELETE a project (soft delete - archive)
 router.delete('/:projectId', async (req, res) => {
   try {
     const { projectId } = req.params;
@@ -146,9 +146,9 @@ router.delete('/:projectId', async (req, res) => {
       });
     }
 
-    // Check if project exists
+    // Check if project exists and is not already archived
     const checkResult = await pool.query(
-      'SELECT * FROM projects WHERE api_key = $1 AND project_id = $2',
+      'SELECT * FROM projects WHERE api_key = $1 AND project_id = $2 AND archived = FALSE',
       [apiKey, projectId]
     );
 
@@ -159,36 +159,37 @@ router.delete('/:projectId', async (req, res) => {
       });
     }
 
-    // Check if there are experiments linked to this project
+    // Get count of experiments that will be archived
     const experimentsResult = await pool.query(
-      'SELECT COUNT(*) as count FROM experiments WHERE api_key = $1 AND project_id = $2',
+      'SELECT COUNT(*) as count FROM experiments WHERE api_key = $1 AND project_id = $2 AND archived = FALSE',
       [apiKey, projectId]
     );
 
     const experimentCount = parseInt(experimentsResult.rows[0].count);
 
-    if (experimentCount > 0) {
-      return res.status(400).json({ 
-        error: 'Cannot delete project',
-        message: `This project has ${experimentCount} experiment(s) linked to it. Please delete or move the experiments first.`,
-        experimentCount
-      });
-    }
-
-    // Delete the project
+    // Archive the project
     await pool.query(
-      'DELETE FROM projects WHERE api_key = $1 AND project_id = $2',
+      'UPDATE projects SET archived = TRUE, updated_at = CURRENT_TIMESTAMP WHERE api_key = $1 AND project_id = $2',
+      [apiKey, projectId]
+    );
+
+    // Archive all experiments in this project
+    await pool.query(
+      'UPDATE experiments SET archived = TRUE, updated_at = CURRENT_TIMESTAMP WHERE api_key = $1 AND project_id = $2',
       [apiKey, projectId]
     );
 
     res.json({
       success: true,
-      message: 'Project deleted successfully'
+      message: experimentCount > 0 
+        ? `Project archived successfully along with ${experimentCount} experiment(s)`
+        : 'Project archived successfully',
+      archivedExperimentCount: experimentCount
     });
   } catch (error) {
-    console.error('Error deleting project:', error);
+    console.error('Error archiving project:', error);
     res.status(500).json({ 
-      error: 'Failed to delete project',
+      error: 'Failed to archive project',
       message: error.message 
     });
   }

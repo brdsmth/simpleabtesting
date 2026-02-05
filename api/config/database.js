@@ -1,8 +1,20 @@
 import pkg from 'pg';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 const { Pool } = pkg;
 dotenv.config();
+
+// Get directory path (works in both ESM and bundled environments)
+let __dirname;
+try {
+  __dirname = path.dirname(fileURLToPath(import.meta.url));
+} catch {
+  // Fallback for bundled/CJS environment
+  __dirname = process.cwd();
+}
 
 // Database configuration
 const dbConfig = {
@@ -26,87 +38,95 @@ const testConnection = async () => {
   }
 };
 
-// Initialize database tables
-const initializeDatabase = async () => {
+// Run database migrations
+const runMigrations = async () => {
   try {
-    console.log('Initializing database tables...');
+    console.log('Running database migrations...');
     const client = await pool.connect();
     
-    // Create projects table
+    // Create migrations tracking table
     await client.query(`
-      CREATE TABLE IF NOT EXISTS projects (
+      CREATE TABLE IF NOT EXISTS schema_migrations (
         id SERIAL PRIMARY KEY,
-        api_key VARCHAR(255) NOT NULL,
-        project_id VARCHAR(255) NOT NULL,
-        name VARCHAR(255) NOT NULL,
-        url VARCHAR(500),
-        description TEXT,
-        settings JSONB DEFAULT '{}',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE(api_key, project_id)
+        migration_name VARCHAR(255) UNIQUE NOT NULL,
+        applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
     
-    // Create experiments table
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS experiments (
-        id SERIAL PRIMARY KEY,
-        api_key VARCHAR(255) NOT NULL,
-        project_id VARCHAR(255),
-        experiment_id VARCHAR(255) NOT NULL,
-        name VARCHAR(255) NOT NULL,
-        description TEXT,
-        variants JSONB NOT NULL,
-        traffic_allocation JSONB NOT NULL,
-        status VARCHAR(50) DEFAULT 'active',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE(api_key, experiment_id)
-      )
-    `);
+    // Get list of applied migrations
+    const appliedResult = await client.query(
+      'SELECT migration_name FROM schema_migrations ORDER BY migration_name'
+    );
+    const appliedMigrations = new Set(appliedResult.rows.map(row => row.migration_name));
+    
+    // Get migration files (check multiple possible locations)
+    const possibleMigrationDirs = [
+      path.join(__dirname, '../migrations'),     // Local dev: api/config -> api/migrations
+      path.join(__dirname, 'migrations'),        // Lambda: bundle root -> migrations
+      path.join(process.cwd(), 'migrations')     // Alternative: CWD -> migrations
+    ];
+    
+    let migrationsDir = null;
+    let migrationFiles = [];
+    
+    // Find the migrations directory
+    for (const dir of possibleMigrationDirs) {
+      if (fs.existsSync(dir)) {
+        migrationsDir = dir;
+        break;
+      }
+    }
+    
+    if (!migrationsDir) {
+      console.log('No migrations directory found, skipping migrations');
+      client.release();
+      return;
+    }
+    
+    console.log(`Using migrations directory: ${migrationsDir}`);
+    migrationFiles = fs.readdirSync(migrationsDir)
+      .filter(file => file.endsWith('.sql'))
+      .sort();
+    
+    // Run pending migrations
+    for (const file of migrationFiles) {
+      if (appliedMigrations.has(file)) {
+        console.log(`Migration ${file} already applied, skipping`);
+        continue;
+      }
+      
+      console.log(`Applying migration: ${file}`);
+      const migrationSQL = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
+      
+      try {
+        await client.query('BEGIN');
+        await client.query(migrationSQL);
+        await client.query(
+          'INSERT INTO schema_migrations (migration_name) VALUES ($1)',
+          [file]
+        );
+        await client.query('COMMIT');
+        console.log(`Migration ${file} applied successfully`);
+      } catch (error) {
+        await client.query('ROLLBACK');
+        console.error(`Failed to apply migration ${file}:`, error.message);
+        throw error;
+      }
+    }
+    
+    console.log('All migrations completed successfully');
+    client.release();
+  } catch (error) {
+    console.error('Migration failed:', error.message);
+    throw error;
+  }
+};
 
-    // Create analytics_events table
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS analytics_events (
-        id SERIAL PRIMARY KEY,
-        api_key VARCHAR(255) NOT NULL,
-        project_id VARCHAR(255),
-        experiment_id VARCHAR(255),
-        variant VARCHAR(255),
-        event_type VARCHAR(255) NOT NULL,
-        event_data JSONB,
-        user_id VARCHAR(255),
-        session_id VARCHAR(255),
-        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-
-    // Create indexes for better performance
-    await client.query(`
-      CREATE INDEX IF NOT EXISTS idx_projects_api_key ON projects(api_key);
-    `);
+// Initialize database with seed data
+const seedDatabase = async () => {
+  try {
+    const client = await pool.connect();
     
-    await client.query(`
-      CREATE INDEX IF NOT EXISTS idx_experiments_api_key ON experiments(api_key);
-    `);
-    
-    await client.query(`
-      CREATE INDEX IF NOT EXISTS idx_experiments_project_id ON experiments(project_id);
-    `);
-    
-    await client.query(`
-      CREATE INDEX IF NOT EXISTS idx_analytics_api_key ON analytics_events(api_key);
-    `);
-    
-    await client.query(`
-      CREATE INDEX IF NOT EXISTS idx_analytics_project_id ON analytics_events(project_id);
-    `);
-    
-    await client.query(`
-      CREATE INDEX IF NOT EXISTS idx_analytics_experiment_id ON analytics_events(experiment_id);
-    `);
-
     // Create a default project if none exists for the demo API key
     const defaultApiKey = 'demo-api-key-123';
     const defaultProjectCheck = await client.query(
@@ -127,16 +147,20 @@ const initializeDatabase = async () => {
         'http://localhost:8082',
         'Default project for experiments'
       ]);
-
       console.log('Default project created');
     }
-
-    console.log('Database tables initialized successfully');
+    
     client.release();
   } catch (error) {
-    console.error('Database initialization failed:', error.message);
+    console.error('Database seeding failed:', error.message);
     throw error;
   }
+};
+
+// Initialize database (run migrations + seed)
+const initializeDatabase = async () => {
+  await runMigrations();
+  await seedDatabase();
 };
 
 export {
