@@ -1,22 +1,18 @@
-import { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation, Link, Navigate } from 'react-router-dom';
 import HomePage from './pages/HomePage';
+import ProjectPage from './pages/ProjectPage';
 import ExperimentsPage from './pages/ExperimentsPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import VisualSelectorPage from './pages/VisualSelectorPage';
+import SettingsPage from './pages/SettingsPage';
+import AuthPage from './pages/AuthPage';
 import ProjectSelector from './components/ProjectSelector';
-import ProjectManager from './components/ProjectManager';
+import FeatherIcon from 'feather-icons-react';
+import { getToken } from './utils/auth';
 import './App.css';
 
-const API_KEY = 'demo-api-key-123'; // Consistent API key across the app
-
-interface NavigationProps {
-  selectedProjectId: string | null;
-  onProjectChange: (projectId: string | null) => void;
-  onManageProjects: () => void;
-}
-
-function Navigation({ selectedProjectId, onProjectChange, onManageProjects }: NavigationProps) {
+function Navigation() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   return (
@@ -27,12 +23,10 @@ function Navigation({ selectedProjectId, onProjectChange, onManageProjects }: Na
           <p>Build and test your experiments</p>
         </Link>
         <div className="header-right desktop-only">
-          <ProjectSelector
-            apiKey={API_KEY}
-            selectedProjectId={selectedProjectId}
-            onProjectChange={onProjectChange}
-            onManageProjects={onManageProjects}
-          />
+          <ProjectSelector />
+          <Link to="/settings" className="settings-link" title="Settings">
+            <FeatherIcon icon="settings" size={20} />
+          </Link>
         </div>
         <button 
           className="hamburger-menu mobile-only"
@@ -48,18 +42,15 @@ function Navigation({ selectedProjectId, onProjectChange, onManageProjects }: Na
       {showMobileMenu && (
         <div className="mobile-menu">
           <div className="mobile-menu-content">
-            <ProjectSelector
-              apiKey={API_KEY}
-              selectedProjectId={selectedProjectId}
-              onProjectChange={(projectId) => {
-                onProjectChange(projectId);
-                setShowMobileMenu(false);
-              }}
-              onManageProjects={() => {
-                onManageProjects();
-                setShowMobileMenu(false);
-              }}
-            />
+            <ProjectSelector />
+            <Link 
+              to="/settings" 
+              className="mobile-menu-link"
+              onClick={() => setShowMobileMenu(false)}
+            >
+              <FeatherIcon icon="settings" size={18} />
+              Settings
+            </Link>
           </div>
         </div>
       )}
@@ -69,42 +60,42 @@ function Navigation({ selectedProjectId, onProjectChange, onManageProjects }: Na
 
 function AppContent() {
   const location = useLocation();
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const [showProjectManager, setShowProjectManager] = useState(false);
+  // Initialize token directly from localStorage so the first render has the correct value
+  const [token, setTokenState] = useState<string | null>(() => getToken());
 
-  const handleProjectsUpdated = () => {
-    // Force re-fetch of projects by toggling the key
-    setSelectedProjectId(null);
-  };
+  // Re-check token when navigating (e.g. after login redirect)
+  useEffect(() => {
+    setTokenState(getToken());
+  }, [location.pathname]);
 
-  // Check if we're on the visual selector page
+  // Check if we're on auth or visual selector pages
+  const isAuthPage = location.pathname === '/auth' || location.pathname.startsWith('/auth/');
   const isVisualSelectorPage = location.pathname === '/visual-selector';
+  const showNavigation = !isAuthPage && !isVisualSelectorPage;
+
+  // Redirect to auth if no JWT token (except for auth pages)
+  if (!token && !isAuthPage) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  // Auth page needs full viewport without app wrapper
+  if (isAuthPage) {
+    return <AuthPage />;
+  }
 
   return (
     <div className="app">
-      {!isVisualSelectorPage && (
-        <Navigation 
-          selectedProjectId={selectedProjectId}
-          onProjectChange={setSelectedProjectId}
-          onManageProjects={() => setShowProjectManager(true)}
-        />
-      )}
+      {showNavigation && token && <Navigation />}
       <div className="app-content" style={isVisualSelectorPage ? { height: '100vh' } : undefined}>
         <Routes>
-          <Route path="/" element={<HomePage selectedProjectId={selectedProjectId} />} />
-          <Route path="/experiments" element={<ExperimentsPage selectedProjectId={selectedProjectId} />} />
-          <Route path="/analytics" element={<AnalyticsPage selectedProjectId={selectedProjectId} />} />
+          <Route path="/" element={<HomePage />} />
+          <Route path="/projects/:projectId" element={<ProjectPage />} />
+          <Route path="/experiments" element={<ExperimentsPage selectedProjectId={null} />} />
+          <Route path="/analytics" element={<AnalyticsPage selectedProjectId={null} />} />
+          <Route path="/settings" element={<SettingsPage />} />
           <Route path="/visual-selector" element={<VisualSelectorPage />} />
         </Routes>
       </div>
-      
-      {!isVisualSelectorPage && showProjectManager && (
-        <ProjectManager
-          apiKey={API_KEY}
-          onClose={() => setShowProjectManager(false)}
-          onProjectsUpdated={handleProjectsUpdated}
-        />
-      )}
     </div>
   );
 }

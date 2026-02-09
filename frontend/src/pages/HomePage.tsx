@@ -1,148 +1,98 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Experiment, DOMChange } from '../types';
+import { Experiment, Project } from '../types';
 import WelcomeModal from '../components/WelcomeModal';
 import FeatherIcon from 'feather-icons-react';
-import { API_URL } from '../config';
+import { apiGet, apiPost } from '../utils/api';
 import './HomePage.css';
 
-const API_KEY = 'demo-api-key-123';
-
-interface HomePageProps {
-  selectedProjectId: string | null;
+function hasSeenWelcome(): boolean {
+  return localStorage.getItem('simple_ab_testing_welcome_seen') === 'true';
 }
 
-export default function HomePage({ selectedProjectId }: HomePageProps) {
+export default function HomePage() {
   const navigate = useNavigate();
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [showNewProject, setShowNewProject] = useState(false);
+  const [newProjectName, setNewProjectName] = useState('');
+  const [newProjectUrl, setNewProjectUrl] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [experiments, setExperiments] = useState<Experiment[]>([]);
   const [loading, setLoading] = useState(true);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
-  const fetchExperiments = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      
-      let url = `${API_URL}/experiments?apiKey=${API_KEY}`;
-      if (selectedProjectId) {
-        url += `&projectId=${selectedProjectId}`;
-      }
-      
-      const response = await fetch(url);
-      if (response.ok) {
-        const data = await response.json();
-        const apiExperiments = data.experiments || [];
-        setExperiments(apiExperiments);
-      }
+      const [projectsData, experimentsData] = await Promise.all([
+        apiGet('/projects'),
+        apiGet('/experiments'),
+      ]);
+      setProjects(projectsData.projects || []);
+      setExperiments(experimentsData.experiments || []);
     } catch (error) {
-      console.error('Failed to fetch experiments:', error);
+      console.error('Failed to fetch data:', error);
     } finally {
       setLoading(false);
     }
-  }, [selectedProjectId]);
+  }, []);
 
   useEffect(() => {
-    fetchExperiments();
-  }, [fetchExperiments]);
+    fetchData();
+  }, [fetchData]);
 
-  // Listen for experiments created from the Visual Selector
   useEffect(() => {
-    const handleMessage = async (event: MessageEvent) => {
-      console.log('HomePage received message:', event.data, 'from origin:', event.origin);
-      
-      // Verify the message is from our origin
-      if (event.origin !== window.location.origin) {
-        console.log('Message origin mismatch, ignoring');
-        return;
-      }
-      
-      if (event.data.type === 'VISUAL_SELECTOR_COMPLETE') {
-        console.log('Complete experiment received from visual selector:', event.data.experiment);
-        
-        const exp = event.data.experiment;
-        
-        // Create the DOM change object
-        const change: DOMChange = {
-          selector: exp.selector,
-          type: exp.changeType,
-          value: exp.changeValue
-        };
-        
-        if (exp.changeType === 'attribute' && exp.attributeName) {
-          (change as any).attribute = exp.attributeName;
-        }
-        
-        // Create the full experiment object
-        const newExperiment: Experiment = {
-          id: `exp-${Date.now()}`,
-          name: exp.name,
-          status: 'paused',
-          trafficAllocation: 100,
-          variations: [
-            {
-              id: 'control',
-              name: 'Control (Original)',
-              weight: 50,
-              changes: []
-            },
-            {
-              id: 'variation-a',
-              name: 'Variation A',
-              weight: 50,
-              changes: [change]
-            }
-          ]
-        };
-        
-        // Add project_id if one is selected
-        if (selectedProjectId) {
-          newExperiment.project_id = selectedProjectId;
-        }
-        
-        // Save to API
-        try {
-          const response = await fetch(`${API_URL}/experiments`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              apiKey: API_KEY,
-              experiment: newExperiment
-            })
-          });
+    if (showNewProject && nameInputRef.current) {
+      nameInputRef.current.focus();
+    }
+  }, [showNewProject]);
 
-          if (response.ok) {
-            console.log('Experiment saved successfully');
-            // Refresh the experiments list
-            await fetchExperiments();
-          } else {
-            console.error('Failed to save experiment');
-          }
-        } catch (error) {
-          console.error('Error saving experiment:', error);
-        }
-      }
+  // Compute per-project experiment metrics
+  const getProjectMetrics = (projectId: string) => {
+    const projectExperiments = experiments.filter(e => e.project_id === projectId);
+    const active = projectExperiments.filter(e => e.status === 'active').length;
+    const paused = projectExperiments.filter(e => e.status === 'paused').length;
+    return {
+      total: projectExperiments.length,
+      active,
+      paused,
     };
+  };
 
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [selectedProjectId, fetchExperiments]);
+  const handleNewProject = () => {
+    setShowNewProject(true);
+  };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'var(--success)';
-      case 'paused': return 'var(--warning)';
-      case 'stopped': return 'var(--text-tertiary)';
-      default: return 'var(--text-secondary)';
+  const handleCreateProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newProjectName.trim()) return;
+
+    setSaving(true);
+    try {
+      const project = {
+        project_id: `project-${Date.now()}`,
+        name: newProjectName.trim(),
+        url: newProjectUrl.trim() || null,
+      };
+
+      await apiPost('/projects', { project });
+      setNewProjectName('');
+      setNewProjectUrl('');
+      setShowNewProject(false);
+      navigate(`/projects/${project.project_id}`);
+    } catch (error) {
+      console.error('Failed to create project:', error);
+    } finally {
+      setSaving(false);
     }
   };
 
-  const getStatusBgColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'var(--success-bg)';
-      case 'paused': return 'var(--warning-bg)';
-      case 'stopped': return 'var(--bg-secondary)';
-      default: return 'var(--bg-secondary)';
+  const handleGetStarted = () => {
+    if (hasSeenWelcome()) {
+      setShowNewProject(true);
+    } else {
+      setShowWelcomeModal(true);
     }
   };
 
@@ -150,23 +100,23 @@ export default function HomePage({ selectedProjectId }: HomePageProps) {
     return (
       <div className="home-page">
         <div className="home-content">
-          <div className="loading-state">Loading experiments...</div>
+          <div className="loading-state">Loading projects...</div>
         </div>
       </div>
     );
   }
 
-  if (experiments.length === 0) {
+  if (projects.length === 0) {
     return (
       <div className="home-page">
         <div className="home-content">
           <div className="empty-state-home">
-            <div className="empty-state-icon-home">No experiments yet</div>
+            <div className="empty-state-icon-home">No projects yet</div>
             <h2>Ready to start testing?</h2>
-            <p>Create your first A/B test and start optimizing your website</p>
+            <p>Create a project to organize your A/B tests. Use the project dropdown in the header to get started.</p>
             <button 
               className="btn btn-primary btn-large"
-              onClick={() => setShowWelcomeModal(true)}
+              onClick={handleGetStarted}
             >
               Get Started
             </button>
@@ -186,77 +136,70 @@ export default function HomePage({ selectedProjectId }: HomePageProps) {
       <div className="home-content">
         <div className="home-header">
           <div>
-            <h1 className="home-title">Your Experiments</h1>
+            <h1 className="home-title">Dashboard</h1>
             <p className="home-subtitle">
-              {experiments.length} {experiments.length === 1 ? 'experiment' : 'experiments'} running
+              {projects.length} {projects.length === 1 ? 'project' : 'projects'} -- {experiments.length} {experiments.length === 1 ? 'experiment' : 'experiments'} total
             </p>
           </div>
           <button 
             className="btn btn-primary"
-            onClick={() => setShowWelcomeModal(true)}
+            onClick={handleNewProject}
           >
             <FeatherIcon icon="plus" size={16} />
-            New Experiment
+            New Project
           </button>
         </div>
 
-        <div className="experiments-grid">
-          {experiments.map((experiment) => (
-            <div key={experiment.id} className="experiment-card">
-              <div className="experiment-card-header">
-                <div className="experiment-card-title-row">
-                  <h3 className="experiment-card-title">{experiment.name}</h3>
-                  <span 
-                    className="experiment-status-badge"
-                    style={{
-                      background: getStatusBgColor(experiment.status),
-                      color: getStatusColor(experiment.status)
-                    }}
-                  >
-                    {experiment.status}
-                  </span>
-                </div>
-              </div>
+        <div className="projects-grid">
+          {projects.map((project) => {
+            const metrics = getProjectMetrics(project.project_id);
+            let hostname = '';
+            if (project.url) {
+              try { hostname = new URL(project.url).hostname; } catch { hostname = project.url; }
+            }
 
-              <div className="experiment-card-body">
-                <div className="experiment-stat">
-                  <div className="experiment-stat-label">Variations</div>
-                  <div className="experiment-stat-value">
-                    {experiment.variations.length}
+            return (
+              <div 
+                key={project.project_id} 
+                className="project-card"
+                onClick={() => navigate(`/projects/${project.project_id}`)}
+              >
+                <div className="project-card-header">
+                  <div className="project-card-icon">
+                    <FeatherIcon icon="folder" size={20} />
                   </div>
-                </div>
-                <div className="experiment-stat">
-                  <div className="experiment-stat-label">Traffic</div>
-                  <div className="experiment-stat-value">
-                    {experiment.trafficAllocation}%
+                  <div className="project-card-title-area">
+                    <h3 className="project-card-title">{project.name}</h3>
+                    {hostname && (
+                      <span className="project-card-url">{hostname}</span>
+                    )}
                   </div>
+                  <FeatherIcon icon="chevron-right" size={18} className="project-card-arrow" />
                 </div>
-                <div className="experiment-stat">
-                  <div className="experiment-stat-label">Changes</div>
-                  <div className="experiment-stat-value">
-                    {experiment.variations.reduce((sum, v) => sum + v.changes.length, 0)}
-                  </div>
-                </div>
-              </div>
 
-              <div className="experiment-card-footer">
-                <button 
-                  className="btn btn-secondary btn-sm experiment-card-btn"
-                  onClick={() => navigate('/analytics')}
-                >
-                  <FeatherIcon icon="bar-chart-2" size={14} />
-                  View Analytics
-                </button>
-                <button 
-                  className="btn btn-secondary btn-sm experiment-card-btn"
-                  onClick={() => navigate('/experiments')}
-                >
-                  <FeatherIcon icon="settings" size={14} />
-                  Configure
-                </button>
+                <div className="project-card-body">
+                  <div className="project-card-stat">
+                    <div className="project-card-stat-value">{metrics.total}</div>
+                    <div className="project-card-stat-label">
+                      {metrics.total === 1 ? 'Experiment' : 'Experiments'}
+                    </div>
+                  </div>
+                  <div className="project-card-stat">
+                    <div className="project-card-stat-value project-card-stat-active">{metrics.active}</div>
+                    <div className="project-card-stat-label">Active</div>
+                  </div>
+                  <div className="project-card-stat">
+                    <div className="project-card-stat-value project-card-stat-paused">{metrics.paused}</div>
+                    <div className="project-card-stat-label">Paused</div>
+                  </div>
+                </div>
+
+                {project.description && (
+                  <div className="project-card-description">{project.description}</div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -264,7 +207,65 @@ export default function HomePage({ selectedProjectId }: HomePageProps) {
         isOpen={showWelcomeModal}
         onClose={() => setShowWelcomeModal(false)}
       />
+
+      {showNewProject && (
+        <div className="new-project-overlay" onClick={() => setShowNewProject(false)}>
+          <div className="new-project-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="new-project-modal-header">
+              <h3>New Project</h3>
+              <button className="new-project-close" onClick={() => setShowNewProject(false)}>
+                <FeatherIcon icon="x" size={18} />
+              </button>
+            </div>
+            <form onSubmit={handleCreateProject} className="new-project-form">
+              <div className="form-group">
+                <label htmlFor="project-name">Project Name</label>
+                <input
+                  ref={nameInputRef}
+                  id="project-name"
+                  type="text"
+                  value={newProjectName}
+                  onChange={(e) => setNewProjectName(e.target.value)}
+                  placeholder="My Website"
+                  disabled={saving}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="project-url">Website URL (optional)</label>
+                <input
+                  id="project-url"
+                  type="url"
+                  value={newProjectUrl}
+                  onChange={(e) => setNewProjectUrl(e.target.value)}
+                  placeholder="https://example.com"
+                  disabled={saving}
+                />
+              </div>
+              <div className="new-project-actions">
+                <button 
+                  type="button" 
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    setShowNewProject(false);
+                    setNewProjectName('');
+                    setNewProjectUrl('');
+                  }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn btn-primary"
+                  disabled={!newProjectName.trim() || saving}
+                >
+                  {saving ? 'Creating...' : 'Create Project'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-

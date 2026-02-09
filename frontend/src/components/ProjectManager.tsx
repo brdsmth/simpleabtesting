@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Project } from '../types';
 import FeatherIcon from 'feather-icons-react';
-import { API_URL } from '../config';
+import { apiGet, apiPost, apiDelete } from '../utils/api';
 
 interface ProjectManagerProps {
-  apiKey: string;
   onClose: () => void;
   onProjectsUpdated: () => void;
 }
 
-export default function ProjectManager({ apiKey, onClose, onProjectsUpdated }: ProjectManagerProps) {
+export default function ProjectManager({ onClose, onProjectsUpdated }: ProjectManagerProps) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -18,19 +17,14 @@ export default function ProjectManager({ apiKey, onClose, onProjectsUpdated }: P
 
   useEffect(() => {
     fetchProjects();
-  }, [apiKey, showArchived]);
+  }, [showArchived]);
 
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      const url = showArchived 
-        ? `${API_URL}/projects?apiKey=${apiKey}&includeArchived=true`
-        : `${API_URL}/projects?apiKey=${apiKey}`;
-      const response = await fetch(url);
-      if (response.ok) {
-        const data = await response.json();
-        setProjects(data.projects || []);
-      }
+      const includeArchived = showArchived ? 'true' : 'false';
+      const data = await apiGet(`/projects?includeArchived=${includeArchived}`);
+      setProjects(data.projects || []);
     } catch (error) {
       console.error('Failed to fetch projects:', error);
     } finally {
@@ -40,22 +34,11 @@ export default function ProjectManager({ apiKey, onClose, onProjectsUpdated }: P
 
   const handleSaveProject = async (project: Project) => {
     try {
-      const response = await fetch(`${API_URL}/projects`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ apiKey, project })
-      });
-
-      if (response.ok) {
-        await fetchProjects();
-        setEditingProject(null);
-        setIsCreating(false);
-        onProjectsUpdated();
-      } else {
-        const data = await response.json();
-        console.error('Failed to save project:', data);
-        alert(data.message || 'Failed to save project');
-      }
+      await apiPost('/projects', { project });
+      await fetchProjects();
+      setEditingProject(null);
+      setIsCreating(false);
+      onProjectsUpdated();
     } catch (error) {
       console.error('Failed to save project:', error);
       alert('Failed to save project: ' + error);
@@ -68,22 +51,13 @@ export default function ProjectManager({ apiKey, onClose, onProjectsUpdated }: P
     }
 
     try {
-      const response = await fetch(`${API_URL}/projects/${projectId}?apiKey=${apiKey}`, {
-        method: 'DELETE'
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        await fetchProjects();
-        onProjectsUpdated();
-        
-        // Show success message with archived experiment count
-        if (data.archivedExperimentCount > 0) {
-          alert(`Project archived successfully along with ${data.archivedExperimentCount} experiment(s)`);
-        }
-      } else {
-        const data = await response.json();
-        alert(data.message || 'Failed to archive project');
+      const data = await apiDelete(`/projects/${projectId}`);
+      await fetchProjects();
+      onProjectsUpdated();
+      
+      // Show success message with archived experiment count
+      if (data.archivedExperimentCount > 0) {
+        alert(`Project archived successfully along with ${data.archivedExperimentCount} experiment(s)`);
       }
     } catch (error) {
       console.error('Failed to archive project:', error);
@@ -97,18 +71,10 @@ export default function ProjectManager({ apiKey, onClose, onProjectsUpdated }: P
     }
 
     try {
-      const response = await fetch(`${API_URL}/projects/${projectId}/unarchive?apiKey=${apiKey}`, {
-        method: 'POST'
-      });
-
-      if (response.ok) {
-        await fetchProjects();
-        onProjectsUpdated();
-        alert('Project restored successfully');
-      } else {
-        const data = await response.json();
-        alert(data.message || 'Failed to restore project');
-      }
+      await apiPost(`/projects/${projectId}/unarchive`);
+      await fetchProjects();
+      onProjectsUpdated();
+      alert('Project restored successfully');
     } catch (error) {
       console.error('Failed to restore project:', error);
       alert('Failed to restore project');
@@ -336,4 +302,3 @@ function ProjectForm({ project, onSave, onCancel, isCreating }: ProjectFormProps
     </form>
   );
 }
-

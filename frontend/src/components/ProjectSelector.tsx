@@ -1,42 +1,40 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Project } from '../types';
 import FeatherIcon from 'feather-icons-react';
-import { API_URL } from '../config';
+import { apiGet, apiPost, apiDelete } from '../utils/api';
 
-interface ProjectSelectorProps {
-  apiKey: string;
-  selectedProjectId: string | null;
-  onProjectChange: (projectId: string | null) => void;
-  onManageProjects: () => void;
-}
-
-export default function ProjectSelector({ 
-  apiKey, 
-  selectedProjectId, 
-  onProjectChange,
-  onManageProjects 
-}: ProjectSelectorProps) {
+export default function ProjectSelector() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Derive selectedProjectId from the URL
+  const projectMatch = location.pathname.match(/^\/projects\/(.+)/);
+  const selectedProjectId = projectMatch ? projectMatch[1] : null;
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [newProjectName, setNewProjectName] = useState('');
+  const [newProjectUrl, setNewProjectUrl] = useState('');
+  const [saving, setSaving] = useState(false);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchProjects();
-  }, [apiKey]);
+  }, []);
+
+  useEffect(() => {
+    if (isCreating && nameInputRef.current) {
+      nameInputRef.current.focus();
+    }
+  }, [isCreating]);
 
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/projects?apiKey=${apiKey}`);
-      if (response.ok) {
-        const data = await response.json();
-        setProjects(data.projects || []);
-        
-        // Auto-select first project if none selected
-        if (!selectedProjectId && data.projects.length > 0) {
-          onProjectChange(data.projects[0].project_id);
-        }
-      }
+      const data = await apiGet('/projects');
+      setProjects(data.projects || []);
     } catch (error) {
       console.error('Failed to fetch projects:', error);
     } finally {
@@ -44,11 +42,64 @@ export default function ProjectSelector({
     }
   };
 
+  const handleCreateProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newProjectName.trim()) return;
+
+    setSaving(true);
+    try {
+      const project = {
+        project_id: `project-${Date.now()}`,
+        name: newProjectName.trim(),
+        url: newProjectUrl.trim() || null,
+      };
+
+      await apiPost('/projects', { project });
+      await fetchProjects();
+      navigate(`/projects/${project.project_id}`);
+      setNewProjectName('');
+      setNewProjectUrl('');
+      setIsCreating(false);
+    } catch (error) {
+      console.error('Failed to create project:', error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleArchiveProject = async (e: React.MouseEvent, projectId: string) => {
+    e.stopPropagation();
+    if (!window.confirm('Archive this project and all its experiments?')) return;
+
+    try {
+      await apiDelete(`/projects/${projectId}`);
+      await fetchProjects();
+      // If the archived project was selected, go to dashboard
+      if (selectedProjectId === projectId) {
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Failed to archive project:', error);
+    }
+  };
+
   const selectedProject = projects.find(p => p.project_id === selectedProjectId);
 
   const handleSelect = (projectId: string | null) => {
-    onProjectChange(projectId);
+    if (projectId) {
+      navigate(`/projects/${projectId}`);
+    } else {
+      navigate('/');
+    }
     setIsOpen(false);
+    setIsCreating(false);
+  };
+
+  const closeDropdown = () => {
+    setIsOpen(false);
+    setIsCreating(false);
+    setNewProjectName('');
+    setNewProjectUrl('');
   };
 
   return (
@@ -57,7 +108,7 @@ export default function ProjectSelector({
       <div className="project-selector-wrapper">
         <button 
           className="project-selector-button"
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={() => isOpen ? closeDropdown() : setIsOpen(true)}
           disabled={loading}
         >
           <div className="project-selector-current">
@@ -86,22 +137,63 @@ export default function ProjectSelector({
 
         {isOpen && (
           <>
-            <div className="dropdown-overlay" onClick={() => setIsOpen(false)} />
+            <div className="dropdown-overlay" onClick={closeDropdown} />
             <div className="project-dropdown">
               <div className="project-dropdown-header">
-                <span>Select Project</span>
+                <span>Projects</span>
                 <button 
                   className="dropdown-action-btn"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setIsOpen(false);
-                    onManageProjects();
+                    setIsCreating(!isCreating);
                   }}
                 >
-                  <FeatherIcon icon="settings" size={14} />
-                  Manage
+                  <FeatherIcon icon="plus" size={14} />
+                  New
                 </button>
               </div>
+
+              {isCreating && (
+                <form onSubmit={handleCreateProject} className="dropdown-create-form">
+                  <input
+                    ref={nameInputRef}
+                    type="text"
+                    value={newProjectName}
+                    onChange={(e) => setNewProjectName(e.target.value)}
+                    placeholder="Project name"
+                    className="dropdown-input"
+                    disabled={saving}
+                  />
+                  <input
+                    type="url"
+                    value={newProjectUrl}
+                    onChange={(e) => setNewProjectUrl(e.target.value)}
+                    placeholder="https://example.com (optional)"
+                    className="dropdown-input"
+                    disabled={saving}
+                  />
+                  <div className="dropdown-form-actions">
+                    <button 
+                      type="button" 
+                      className="dropdown-cancel-btn"
+                      onClick={() => {
+                        setIsCreating(false);
+                        setNewProjectName('');
+                        setNewProjectUrl('');
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      type="submit" 
+                      className="dropdown-save-btn"
+                      disabled={!newProjectName.trim() || saving}
+                    >
+                      {saving ? 'Creating...' : 'Create'}
+                    </button>
+                  </div>
+                </form>
+              )}
               
               <div className="project-dropdown-list">
                 <div 
@@ -145,11 +237,25 @@ export default function ProjectSelector({
                         </div>
                       )}
                     </div>
-                    {selectedProjectId === project.project_id && (
+                    {selectedProjectId === project.project_id ? (
                       <FeatherIcon icon="check" size={16} className="check-icon" />
+                    ) : (
+                      <button
+                        className="project-archive-btn"
+                        onClick={(e) => handleArchiveProject(e, project.project_id)}
+                        title="Archive project"
+                      >
+                        <FeatherIcon icon="archive" size={14} />
+                      </button>
                     )}
                   </div>
                 ))}
+
+                {projects.length === 0 && !loading && (
+                  <div className="dropdown-empty">
+                    No projects yet
+                  </div>
+                )}
               </div>
             </div>
           </>
@@ -158,4 +264,3 @@ export default function ProjectSelector({
     </div>
   );
 }
-

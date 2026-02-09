@@ -4,9 +4,7 @@ import ExperimentPreview from '../components/ExperimentPreview';
 import Toast, { ToastType } from '../components/Toast';
 import TemplateSelector from '../components/TemplateSelector';
 import CreateExperimentModal from '../components/CreateExperimentModal';
-import { API_URL } from '../config';
-
-const API_KEY = 'demo-api-key-123'; // Consistent API key across the app
+import { apiGet, apiPost } from '../utils/api';
 
 interface ToastMessage {
   id: number;
@@ -35,34 +33,26 @@ export default function ExperimentsPage({ selectedProjectId }: ExperimentsPagePr
       try {
         setLoading(true);
         
-        // Add a minimum loading time for better UX when switching projects
         const minLoadingTime = new Promise(resolve => setTimeout(resolve, 300));
         
-        let url = `${API_URL}/experiments?apiKey=${API_KEY}`;
-        if (selectedProjectId) {
-          url += `&projectId=${selectedProjectId}`;
-        }
+        const endpoint = selectedProjectId 
+          ? `/experiments?projectId=${selectedProjectId}`
+          : '/experiments';
         
-        const response = await fetch(url);
-        if (response.ok) {
-          const data = await response.json();
-          const apiExperiments = data.experiments || [];
-          
-          // Wait for minimum loading time to complete
-          await minLoadingTime;
-          
-          setExperiments(apiExperiments);
-          
-          // Select the first experiment by default
-          if (apiExperiments.length > 0) {
-            setSelectedExperiment(apiExperiments[0]);
-          } else {
-            setSelectedExperiment(null);
-          }
+        const data = await apiGet(endpoint);
+        const apiExperiments = data.experiments || [];
+        
+        await minLoadingTime;
+        
+        setExperiments(apiExperiments);
+        
+        if (apiExperiments.length > 0) {
+          setSelectedExperiment(apiExperiments[0]);
+        } else {
+          setSelectedExperiment(null);
         }
       } catch (error) {
         console.error('Failed to fetch experiments:', error);
-        // If API fails, we'll just show empty state
       } finally {
         setLoading(false);
       }
@@ -81,32 +71,15 @@ export default function ExperimentsPage({ selectedProjectId }: ExperimentsPagePr
   };
 
   const addExperiment = async (experiment: Experiment) => {
-    // Add project_id if one is selected
     if (selectedProjectId) {
       experiment.project_id = selectedProjectId;
     }
     
-    // Save to API first
     try {
-      const response = await fetch(`${API_URL}/experiments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          apiKey: API_KEY,
-          experiment: experiment
-        })
-      });
-
-      if (response.ok) {
-        setExperiments(prev => [...prev, experiment]);
-        setSelectedExperiment(experiment); // Select the newly created experiment
-        showToast('Experiment created successfully!', 'success');
-      } else {
-        console.error('Failed to save new experiment');
-        showToast('Failed to create experiment', 'error');
-      }
+      await apiPost('/experiments', { experiment });
+      setExperiments(prev => [...prev, experiment]);
+      setSelectedExperiment(experiment);
+      showToast('Experiment created successfully!', 'success');
     } catch (error) {
       console.error('Error creating experiment:', error);
       showToast('Failed to create experiment', 'error');
@@ -114,33 +87,16 @@ export default function ExperimentsPage({ selectedProjectId }: ExperimentsPagePr
   };
 
   const handleTemplateSelected = async (experiment: Experiment) => {
-    // Add project_id if one is selected
     if (selectedProjectId) {
       experiment.project_id = selectedProjectId;
     }
     
-    // Save to API first
     try {
-      const response = await fetch(`${API_URL}/experiments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          apiKey: API_KEY,
-          experiment: experiment
-        })
-      });
-
-      if (response.ok) {
-        setExperiments(prev => [...prev, experiment]);
-        setSelectedExperiment(experiment);
-        setShowTemplateSelector(false);
-        showToast('Experiment created from template!', 'success');
-      } else {
-        console.error('Failed to save experiment from template');
-        showToast('Failed to create experiment from template', 'error');
-      }
+      await apiPost('/experiments', { experiment });
+      setExperiments(prev => [...prev, experiment]);
+      setSelectedExperiment(experiment);
+      setShowTemplateSelector(false);
+      showToast('Experiment created from template!', 'success');
     } catch (error) {
       console.error('Error creating experiment from template:', error);
       showToast('Failed to create experiment from template', 'error');
@@ -149,31 +105,14 @@ export default function ExperimentsPage({ selectedProjectId }: ExperimentsPagePr
 
   const updateExperiment = async (updatedExperiment: Experiment) => {
     try {
-      // Save to API first
-      const response = await fetch(`${API_URL}/experiments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          apiKey: API_KEY,
-          experiment: updatedExperiment
-        })
-      });
-
-      if (response.ok) {
-        // Update local state only if API save was successful
-        setExperiments(prev => 
-          prev.map(exp => exp.id === updatedExperiment.id ? updatedExperiment : exp)
-        );
-        if (selectedExperiment?.id === updatedExperiment.id) {
-          setSelectedExperiment(updatedExperiment);
-        }
-        showToast('Experiment updated successfully!', 'success');
-      } else {
-        console.error('Failed to update experiment in API');
-        showToast('Failed to save changes. Please try again.', 'error');
+      await apiPost('/experiments', { experiment: updatedExperiment });
+      setExperiments(prev => 
+        prev.map(exp => exp.id === updatedExperiment.id ? updatedExperiment : exp)
+      );
+      if (selectedExperiment?.id === updatedExperiment.id) {
+        setSelectedExperiment(updatedExperiment);
       }
+      showToast('Experiment updated successfully!', 'success');
     } catch (error) {
       console.error('Error updating experiment:', error);
       showToast('Failed to save changes. Please try again.', 'error');
@@ -230,7 +169,7 @@ export default function ExperimentsPage({ selectedProjectId }: ExperimentsPagePr
   if (loading) {
     return (
       <>
-        <div className="main-content" style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="main-content" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div className="loading-state">
             <div className="loading-spinner"></div>
             <p style={{ marginTop: '1rem', color: 'var(--text-secondary)' }}>Loading experiments...</p>

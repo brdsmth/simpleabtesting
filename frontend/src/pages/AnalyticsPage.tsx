@@ -6,7 +6,7 @@ interface AnalyticsPageProps {
 
 export default function AnalyticsPage({ selectedProjectId }: AnalyticsPageProps) {
   return (
-    <div className="main-content" style={{ gridColumn: '1 / -1' }}>
+    <div className="main-content" style={{ flex: 1 }}>
       <Analytics projectId={selectedProjectId || ''} />
     </div>
   );

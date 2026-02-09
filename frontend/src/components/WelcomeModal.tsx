@@ -72,6 +72,7 @@ export default function WelcomeModal({ isOpen, onClose }: WelcomeModalProps) {
 
   const handleClose = () => {
     setCurrentSlide(0);
+    localStorage.setItem('simple_ab_testing_welcome_seen', 'true');
     onClose();
   };
 
