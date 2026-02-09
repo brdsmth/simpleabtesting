@@ -1,23 +1,23 @@
 import express from 'express';
 import { pool } from '../config/database.js';
+import { verifyToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// GET all projects for an API key
+// Apply authentication to all project routes
+router.use(verifyToken);
+
+// GET all projects for the authenticated user
 router.get('/', async (req, res) => {
   try {
-    const { apiKey, includeArchived } = req.query;
+    const userId = req.user.userId;
+    const includeArchived = req.query.includeArchived === 'true';
 
-    if (!apiKey) {
-      return res.status(400).json({ 
-        error: 'API key is required',
-        message: 'Please provide an apiKey query parameter'
-      });
-    }
+    // Get user's API key for SDK usage
+    const userResult = await pool.query('SELECT api_key FROM users WHERE id = $1', [userId]);
+    const apiKey = userResult.rows[0].api_key;
 
-    // If includeArchived=true, show only archived projects
-    // Otherwise show only active projects
-    const archivedFilter = includeArchived === 'true' ? 'archived = TRUE' : 'archived = FALSE';
+    const archivedFilter = includeArchived ? 'archived = TRUE' : 'archived = FALSE';
 
     const result = await pool.query(
       `SELECT project_id, name, url, description, settings, archived, created_at, updated_at 
@@ -44,14 +44,11 @@ router.get('/', async (req, res) => {
 router.get('/:projectId', async (req, res) => {
   try {
     const { projectId } = req.params;
-    const { apiKey } = req.query;
+    const userId = req.user.userId;
 
-    if (!apiKey) {
-      return res.status(400).json({ 
-        error: 'API key is required',
-        message: 'Please provide an apiKey query parameter'
-      });
-    }
+    // Get user's API key
+    const userResult = await pool.query('SELECT api_key FROM users WHERE id = $1', [userId]);
+    const apiKey = userResult.rows[0].api_key;
 
     const result = await pool.query(
       `SELECT project_id, name, url, description, settings, created_at, updated_at 
@@ -83,12 +80,13 @@ router.get('/:projectId', async (req, res) => {
 // POST - Create or update a project
 router.post('/', async (req, res) => {
   try {
-    const { apiKey, project } = req.body;
+    const { project } = req.body;
+    const userId = req.user.userId;
 
-    if (!apiKey || !project) {
+    if (!project) {
       return res.status(400).json({ 
         error: 'Invalid request',
-        message: 'Both apiKey and project object are required'
+        message: 'Project object is required'
       });
     }
 
@@ -101,10 +99,14 @@ router.post('/', async (req, res) => {
       });
     }
 
+    // Get user's API key for SDK usage
+    const userResult = await pool.query('SELECT api_key FROM users WHERE id = $1', [userId]);
+    const apiKey = userResult.rows[0].api_key;
+
     // Upsert the project
     const result = await pool.query(
-      `INSERT INTO projects (api_key, project_id, name, url, description, settings, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
+      `INSERT INTO projects (api_key, user_id, project_id, name, url, description, settings, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
        ON CONFLICT (api_key, project_id) 
        DO UPDATE SET 
          name = EXCLUDED.name,
@@ -115,6 +117,7 @@ router.post('/', async (req, res) => {
        RETURNING *`,
       [
         apiKey,
+        userId,
         project_id,
         name,
         url || null,
@@ -141,14 +144,11 @@ router.post('/', async (req, res) => {
 router.post('/:projectId/unarchive', async (req, res) => {
   try {
     const { projectId } = req.params;
-    const { apiKey } = req.query;
+    const userId = req.user.userId;
 
-    if (!apiKey) {
-      return res.status(400).json({ 
-        error: 'API key is required',
-        message: 'Please provide an apiKey query parameter'
-      });
-    }
+    // Get user's API key
+    const userResult = await pool.query('SELECT api_key FROM users WHERE id = $1', [userId]);
+    const apiKey = userResult.rows[0].api_key;
 
     // Check if project exists and is archived
     const checkResult = await pool.query(
@@ -186,14 +186,11 @@ router.post('/:projectId/unarchive', async (req, res) => {
 router.delete('/:projectId', async (req, res) => {
   try {
     const { projectId } = req.params;
-    const { apiKey } = req.query;
+    const userId = req.user.userId;
 
-    if (!apiKey) {
-      return res.status(400).json({ 
-        error: 'API key is required',
-        message: 'Please provide an apiKey query parameter'
-      });
-    }
+    // Get user's API key
+    const userResult = await pool.query('SELECT api_key FROM users WHERE id = $1', [userId]);
+    const apiKey = userResult.rows[0].api_key;
 
     // Check if project exists and is not already archived
     const checkResult = await pool.query(
@@ -245,4 +242,3 @@ router.delete('/:projectId', async (req, res) => {
 });
 
 export default router;
-

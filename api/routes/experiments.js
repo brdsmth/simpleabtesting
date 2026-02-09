@@ -1,29 +1,31 @@
 import express from 'express';
 import { pool } from '../config/database.js';
+import { verifyToken } from '../middleware/auth.js';
+
 const router = express.Router();
 
-// GET /experiments - Fetch experiments by API key (and optionally by project_id)
+// Apply authentication to all experiment routes
+router.use(verifyToken);
+
+// GET /experiments - Fetch experiments for authenticated user (and optionally by project_id)
 router.get('/', async (req, res) => {
-  const apiKey = req.query.apiKey;
   const projectId = req.query.projectId;
-  
-  if (!apiKey) {
-    return res.status(400).json({
-      error: 'API key is required',
-      message: 'Please provide an apiKey query parameter'
-    });
-  }
+  const userId = req.user.userId;
   
   try {
+    // Get user's API key
+    const userResult = await pool.query('SELECT api_key FROM users WHERE id = $1', [userId]);
+    const apiKey = userResult.rows[0].api_key;
+
     let query = 'SELECT * FROM experiments WHERE api_key = $1 AND archived = FALSE';
     const params = [apiKey];
     
     if (projectId) {
       query += ' AND project_id = $2';
       params.push(projectId);
-      console.log(`[API] Fetching experiments for API key: ${apiKey}, Project ID: ${projectId}`);
+      console.log(`[API] Fetching experiments for Project ID: ${projectId}`);
     } else {
-      console.log(`[API] Fetching experiments for API key: ${apiKey}`);
+      console.log(`[API] Fetching all experiments for user ${userId}`);
     }
     
     const result = await pool.query(query, params);
@@ -40,7 +42,6 @@ router.get('/', async (req, res) => {
     console.log(`[API] Found ${experiments.length} experiments`);
     
     res.json({
-      apiKey,
       projectId: projectId || null,
       experiments,
       count: experiments.length
@@ -56,15 +57,20 @@ router.get('/', async (req, res) => {
 
 // POST /experiments - Save a created experiment to the database
 router.post('/', async (req, res) => {
-  const { apiKey, experiment } = req.body;
+  const { experiment } = req.body;
+  const userId = req.user.userId;
   
-  if (!apiKey || !experiment) {
+  if (!experiment) {
     return res.status(400).json({
-      error: 'API key and experiment are required'
+      error: 'Experiment is required'
     });
   }
   
   try {
+    // Get user's API key
+    const userResult = await pool.query('SELECT api_key FROM users WHERE id = $1', [userId]);
+    const apiKey = userResult.rows[0].api_key;
+
     // Check if experiment exists
     const checkQuery = 'SELECT id FROM experiments WHERE api_key = $1 AND experiment_id = $2';
     const checkResult = await pool.query(checkQuery, [apiKey, experiment.id]);
@@ -87,16 +93,17 @@ router.post('/', async (req, res) => {
         apiKey,
         experiment.id
       ]);
-      console.log(`[API] Updated experiment ${experiment.id} for API key: ${apiKey}`);
+      console.log(`[API] Updated experiment ${experiment.id}`);
     } else {
       // Insert new experiment
       const insertQuery = `
-        INSERT INTO experiments (api_key, experiment_id, name, description, variants, traffic_allocation, status, project_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        INSERT INTO experiments (api_key, user_id, experiment_id, name, description, variants, traffic_allocation, status, project_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING *
       `;
       await pool.query(insertQuery, [
         apiKey,
+        userId,
         experiment.id,
         experiment.name,
         experiment.description || null,
@@ -105,12 +112,11 @@ router.post('/', async (req, res) => {
         experiment.status || 'paused',
         experiment.project_id || null
       ]);
-      console.log(`[API] Added new experiment ${experiment.id} for API key: ${apiKey}`);
+      console.log(`[API] Added new experiment ${experiment.id}`);
     }
     
     res.json({
       success: true,
-      apiKey,
       experiment,
       message: checkResult.rows.length > 0 ? 'Experiment updated successfully' : 'Experiment created successfully'
     });

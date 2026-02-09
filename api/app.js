@@ -6,6 +6,7 @@ import demoRouter from './routes/demo.js';
 import sdkRouter from './routes/sdk.js';
 import analyticsRouter from './routes/analytics.js';
 import projectsRouter from './routes/projects.js';
+import authRouter from './routes/auth.js';
 
 const app = express();
 
@@ -14,6 +15,7 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
+app.use('/auth', authRouter);
 app.use('/projects', projectsRouter);
 app.use('/experiments', experimentsRouter);
 app.use('/demo', demoRouter);
