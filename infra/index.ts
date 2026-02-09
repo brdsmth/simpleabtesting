@@ -262,6 +262,12 @@ new aws.iam.RolePolicyAttachment(`${projectName}-lambda-basic-policy`, {
   policyArn: "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 });
 
+// SES policy allows Lambda to send emails
+new aws.iam.RolePolicyAttachment(`${projectName}-lambda-ses-policy`, {
+  role: lambdaRole.name,
+  policyArn: "arn:aws:iam::aws:policy/AmazonSESFullAccess"
+});
+
 // Build SDK CDN URL from custom domain or CloudFront distribution
 const sdkCdnUrl = sdkDomain 
   ? `https://${sdkDomain}/simple-ab-testing.umd.js`
@@ -279,6 +285,9 @@ const apiLambda = new aws.lambda.Function(`${projectName}-api`, {
     variables: {
       DATABASE_URL: pulumi.interpolate`postgresql://simple_ab_testing_user:${config.requireSecret("dbPassword")}@${dbCluster.endpoint}:5432/simple_ab_testing`,
       NODE_ENV: "production",
+      JWT_SECRET: config.requireSecret("jwtSecret"),
+      FROM_EMAIL: config.require("fromEmail"),
+      FRONTEND_URL: frontendDomain ? `https://${frontendDomain}` : pulumi.interpolate`https://${frontend.cdn.domainName}`,
       ...(sdkCdnUrl && { SDK_CDN_URL: sdkCdnUrl })
     }
   },
