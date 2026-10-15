@@ -107,6 +107,18 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for complete deployment guide.
 
 **Architecture**: Serverless hybrid with RDS Aurora Serverless v2, Lambda, API Gateway, and CloudFront CDN.
 
+## Testing
+
+There is no automated test suite yet. Before opening a PR, run the available static checks and builds:
+
+```bash
+cd sdk && npm run type-check   # Type-check the SDK
+npm run build:all              # Type-check and build the SDK, frontend, and demo (from repo root)
+cd lander && npm run lint      # Lint the lander
+```
+
+To test end-to-end, start the stack with `docker-compose up -d`, create an experiment in the dashboard ([http://localhost:8081](http://localhost:8081)), and check it on the demo page ([http://localhost:8082](http://localhost:8082)). Use **Clear Visitor ID (Full Reset)** on the demo page to get assigned a different variation (see [Testing A/B Variations on the Demo Page](#4-testing-ab-variations-on-the-demo-page)).
+
 ## Documentation
 
 - [Getting Started Guide](./docs/GETTING_STARTED.md)
